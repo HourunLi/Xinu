@@ -2,6 +2,7 @@
 
 #include <xinu.h>
 
+extern void ltss();
 /* Memory bounds */
 
 void	*minheap;		/* Start of heap			*/
@@ -30,7 +31,7 @@ struct __attribute__ ((__packed__)) sd {
 	unsigned char	sd_hibase;
 };
 
-#define	NGD			4	/* Number of global descriptor entries	*/
+#define	NGD			8	/* Number of global descriptor entries	*/
 #define FLAGS_GRANULARITY	0x80
 #define FLAGS_SIZE		0x40
 #define	FLAGS_SETTINGS		(FLAGS_GRANULARITY | FLAGS_SIZE)
@@ -45,6 +46,14 @@ struct sd gdt_copy[NGD] = {
 {       0xffff,          0,           0,      0x92,         0xcf,        0, },
 /* 3rd, Kernel Stack Segment */
 {       0xffff,          0,           0,      0x92,         0xcf,        0, },
+/* 4rd, user code Segment */
+{       0xffff,          0,           0,      0xfa,         0xc0,        0, },
+/* 5rd, user Data Segment */
+{       0xffff,          0,           0,      0xf2,         0xc0,        0, },
+/* 6rd, user Stack Segment */
+{       0xffff,          0,           0,      0xf2,         0xc0,        0, },
+/* 7th entry NULL */
+{            0,          0,           0,      0x89,            0,        0, },
 };
 
 extern	struct	sd gdt[];	/* Global segment table			*/
@@ -172,5 +181,15 @@ void	setsegs()
 	psd->sd_lolimit = ds_end;
 	psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
 
+    psd = &gdt_copy[7];	/* task statu segment */
+    psd->sd_lolimit = 0xffff & (0x68-1);
+    psd->sd_lobase = ((long)tss) & 0xffff;
+    psd->sd_midbase = (((long)tss) & 0xff0000) >> 16;
+    psd->sd_hibase = (((long)tss) & 0xff000000) >> 24;
+    kprintf("%x %02x %02x %04x\n", tss, psd->sd_hibase, psd->sd_midbase, psd->sd_lobase);
+    // tss->ss0 = (3 << 3);
+    tss->iomb = (uint16) 0xffff; 
+    // ltss();
+    
 	memcpy(gdt, gdt_copy, sizeof(gdt_copy));
 }

@@ -108,7 +108,7 @@ local process	startup(void)
 {
 	/* Create a process to execute function main() */
 
-	syscall_resume(syscall_create((void *)main, INITPRIO,
+	syscall_resume(syscall_create((void *)main, INITPRIO+10,
 					"Main process", 0, NULL));
 
 	/* Startup process exits at this point */
@@ -130,7 +130,7 @@ static	void	sysinit()
 	struct	sentry	*semptr;	/* Ptr to semaphore table entry	*/
 
 	/* Platform Specific Initialization */
-
+    ltss();
 	platinit();
 
 	/* Reset the console */

@@ -348,3 +348,15 @@ cpuid:
 	cpuid
 	popl	%ebx
 	ret			# return value in %eax
+
+    .global ret_k2u
+    .type ret_k2u, @function 
+ret_k2u:
+    iret
+
+    .global ltss
+    .type ltss, @function 
+ltss:
+    movl $56, %eax
+    ltr  %ax
+    ret

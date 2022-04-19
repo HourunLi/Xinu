@@ -36,7 +36,8 @@ uint16	girmask;
 #define NID		48	/* Number of interrupt descriptors	*/
 #define	IGDT_TRAPG	15	/* Trap Gate				*/
 #define	IGDT_INTRG	0xe	/* Interrupt Gate			*/
-
+#define TRAP_NUM 1
+#define TRAP_BEGIN 48  
 void	_8259_setirmask(void);	/* Set interrupt mask			*/
 
 
@@ -58,7 +59,9 @@ int32	initevec()
 	for(i = 0; i < NID; i++) {
 		set_evec(i, defevec[i]);
 	}
-
+    for(i = 0; i < TRAP_NUM; i++) {
+        set_evec_trap(i+TRAP_BEGIN, defevec[i+TRAP_BEGIN]);
+    }
 	/* Load the interrupt descriptor table */
 
 	lidt();
@@ -86,6 +89,22 @@ int32	initevec()
 	_8259_setirmask();
 
         return OK;
+}
+
+int32	set_evec_trap(uint32 xnum, uint32 handler)
+{
+	struct	idt	*pidt;
+
+	pidt = &idt[xnum];
+	pidt->igd_loffset = handler;
+	pidt->igd_segsel = 0x8;		/* Kernel code segment */
+	pidt->igd_mbz = 0;
+	pidt->igd_type = IGDT_INTRG;
+	pidt->igd_dpl = 3;
+	pidt->igd_present = 1;
+	pidt->igd_hoffset = handler >> 16;
+
+    return OK;
 }
 
 /*------------------------------------------------------------------------
