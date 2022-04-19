@@ -470,7 +470,29 @@ _Xint46:
 	pushl	$46
 	jmp	Xtrap
 
+    .global _Xint48
+_Xint48:
+    pushl %ds
+    pushl %es
+    pushl %fs
+    pushl %gs
+    movl $(0x2 << 3), %eax
+    movw %ax, %ds
+    movw %ax, %es
+    movw %ax, %fs
+    movw %ax, %gs
+    call sys_uprintf
+    popl %gs
+    popl %fs
+    popl %es
+    popl %ds
+    iret
 
+
+    .global uprintf
+uprintf:
+    int $48
+    ret
 
 /*------------------------------------------------------------------------
  * _Xint? - array of exception/interrupt entry points that are
@@ -528,3 +550,4 @@ defevec:
 	.long	_Xint45			/* available for ext. interrupt	*/
 	.long	_Xint46			/* available for ext. interrupt	*/
 	.long	spurious_irq15
+    .long   _Xint48

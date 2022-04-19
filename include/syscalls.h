@@ -21,3 +21,5 @@
 #define SYSCALL_CONTROL		12
 #define SYSCALL_KILL		13
 #define SYSCALL_GETPID		14
+
+void sys_uprintf();
