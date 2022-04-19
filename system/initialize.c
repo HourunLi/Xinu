@@ -109,9 +109,9 @@ local process	startup(void)
 {
 	/* Create a process to execute function main() */
 
-	// syscall_resume(syscall_create((void *)main, INITPRIO+10,
+	// syscall_resume(syscall_create((void *)main, INITPRIO,
 	// 				"Main process", 0, NULL));
-	resume(create((void *)main, INITSTK, INITPRIO,
+	resume(create((void *)main, INITSTK, INITPRIO+10,
 					"Main process", 0, NULL));
 	/* Startup process exits at this point */
 
