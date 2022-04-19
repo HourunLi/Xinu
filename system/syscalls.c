@@ -38,6 +38,6 @@ uint32 do_syscall(uint32 id, uint32 args_count, ...) {
 }
 
 void sys_uprintf() {
-    kprintf("hello from sysprintf\n");
+    kprintf("hello from sysprintf\n ");
     return;
 }
