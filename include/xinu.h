@@ -25,6 +25,5 @@
 #include <multiboot.h>
 #include <stdio.h>
 #include <string.h>
-#include <syscall.h>
 
 

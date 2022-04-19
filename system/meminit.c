@@ -2,7 +2,7 @@
 
 #include <xinu.h>
 
-extern void ltss();
+
 /* Memory bounds */
 
 void	*minheap;		/* Start of heap			*/
@@ -57,7 +57,7 @@ struct sd gdt_copy[NGD] = {
 };
 
 extern	struct	sd gdt[];	/* Global segment table			*/
-
+extern taskstate tss[];
 /*------------------------------------------------------------------------
  * meminit - initialize memory bounds and the free memory list
  *------------------------------------------------------------------------
@@ -154,6 +154,9 @@ void	meminit(void) {
 	}
 }
 
+// static inline void ltr(uint16 sel) {
+//   asm volatile("ltr %0" : : "r" (sel));
+// }
 
 /*------------------------------------------------------------------------
  * setsegs  -  Initialize the global segment table

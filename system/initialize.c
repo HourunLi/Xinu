@@ -13,6 +13,7 @@ extern	void	*_end;		/* End of Xinu code			*/
 extern	void main(void);	/* Main is the first process created	*/
 static	void sysinit(); 	/* Internal system initialization	*/
 extern	void meminit(void);	/* Initializes the free memory list	*/
+extern void ltss();
 local	process startup(void);	/* Process to finish startup tasks	*/
 
 /* Declarations of major kernel variables */
@@ -108,9 +109,10 @@ local process	startup(void)
 {
 	/* Create a process to execute function main() */
 
-	syscall_resume(syscall_create((void *)main, INITPRIO+10,
+	// syscall_resume(syscall_create((void *)main, INITPRIO+10,
+	// 				"Main process", 0, NULL));
+	resume(create((void *)main, INITSTK, INITPRIO,
 					"Main process", 0, NULL));
-
 	/* Startup process exits at this point */
 
 	return OK;

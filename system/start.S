@@ -47,9 +47,10 @@
 #define	MULTIBOOT_HEADER_FLAGS  0x00010003
 #define MULTIBOOT_SIGNATURE	0x2BADB002	/* Multiboot signature verification	*/
 #define MULTIBOOT_BOOTINFO_MMAP	0x00000040	/* mmap_length mmap_addr valid		*/
-#define	GDT_ENTRIES		4
+#define	GDT_ENTRIES		8
 #define	GDT_ENTRY_SIZE		8
 #define	GDT_BYTES		(GDT_ENTRIES * GDT_ENTRY_SIZE)
+#define TSS_BYTES       104
 #define	IDT_ENTRIES		256
 #define	IDT_ENTRY_SIZE		8
 #define	IDT_BYTES		(IDT_ENTRIES * IDT_ENTRY_SIZE)
@@ -60,6 +61,8 @@
 	.align	16	
 	.globl	gdt
 gdt:	.space	GDT_BYTES
+    .global tss
+tss:	.space	TSS_BYTES
 gdtr:	.word	(GDT_BYTES-1)		# sizeof _gdt -1 (in bytes)
 	.long	gdt			# global pointer to the gdt
 		

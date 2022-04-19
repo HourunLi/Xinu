@@ -71,3 +71,43 @@ extern	qid16	readylist;	/* global ID for list of ready processes*/
 syscall	kprintf(char *fmt, ...);
 syscall	kputc(byte);
 syscall	kgetc(void);
+
+typedef struct TASKSTATE {
+    unsigned int link;         // Old ts selector
+    unsigned int esp0;         // Stack pointers and segment selectors
+    unsigned short ss0;        //   after an increase in privilege level
+    unsigned short padding1;
+    unsigned int *esp1;
+    unsigned short ss1;
+    unsigned short padding2;
+    unsigned int *esp2;
+    unsigned short ss2;
+    unsigned short padding3;
+    void *cr3;         // Page directory base
+    unsigned int *eip;         // Saved state from last task switch
+    unsigned int eflags;
+    unsigned int eax;          // More saved state (registers)
+    unsigned int ecx;
+    unsigned int edx;
+    unsigned int ebx;
+    unsigned int *esp;
+    unsigned int *ebp;
+    unsigned int esi;
+    unsigned int edi;
+    unsigned short es;         // Even more saved state (segment selectors)
+    unsigned short padding4;
+    unsigned short cs;
+    unsigned short padding5;
+    unsigned short ss;
+    unsigned short padding6;
+    unsigned short ds;
+    unsigned short padding7;
+    unsigned short fs;
+    unsigned short padding8;
+    unsigned short gs;
+    unsigned short padding9;
+    unsigned short ldt;
+    unsigned short padding10;
+    unsigned short t;          // Trap on task switch
+    unsigned short iomb;       // I/O map base address
+}taskstate;

@@ -3,6 +3,8 @@
         "*.cjson": "jsonc",
         "*.wxss": "css",
         "*.wxs": "javascript",
-        "cstdarg": "c"
+        "cstdarg": "c",
+        "xinu.h": "c",
+        "string.h": "c"
     }
 }
