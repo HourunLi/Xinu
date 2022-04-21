@@ -13,7 +13,7 @@ extern	void	*_end;		/* End of Xinu code			*/
 extern	void main(void);	/* Main is the first process created	*/
 static	void sysinit(); 	/* Internal system initialization	*/
 extern	void meminit(void);	/* Initializes the free memory list	*/
-extern void ltss();
+// extern void ltss();
 local	process startup(void);	/* Process to finish startup tasks	*/
 
 /* Declarations of major kernel variables */
@@ -101,21 +101,23 @@ void	nulluser()
 /*------------------------------------------------------------------------
  *
  * startup  -  Finish startup takss that cannot be run from the Null
- *		  process and then create and resumethe main process
+ *		  process and then create and resume the main process
  *
- *------------------------------------------------------------------------
+ *----------------------------------------------
+ --------------------------
  */
 local process	startup(void)
 {
 	/* Create a process to execute function main() */
 
-	// syscall_resume(syscall_create((void *)main, INITPRIO,
-	// 				"Main process", 0, NULL));
-	resume(create((void *)main, INITSTK, INITPRIO+10,
+	syscall_resume(syscall_create((void *)main, INITSTK, INITPRIO,
 					"Main process", 0, NULL));
+	// resume(create((void *)main, INITSTK, INITPRIO+10,
+	// 				"Main process", 0, NULL));
 	/* Startup process exits at this point */
 
 	return OK;
+    
 }
 
 
@@ -132,7 +134,7 @@ static	void	sysinit()
 	struct	sentry	*semptr;	/* Ptr to semaphore table entry	*/
 
 	/* Platform Specific Initialization */
-    ltss();
+    // ltss();
 	platinit();
 
 	/* Reset the console */

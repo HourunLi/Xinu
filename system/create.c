@@ -40,7 +40,7 @@ pid32	create(
 		return SYSERR;
 	}
     kprintf("%s\n", name);
-    kprintf("%x, %x", saddr, saddr_user);
+    // kprintf("%x, %x", saddr, saddr_user);
 	prcount++;
 	prptr = &proctab[pid];
 
@@ -79,9 +79,10 @@ pid32	create(
 		
 	*--saddr = (long)INITRET;	/* Push on return address	*/
     *--saddr_user = (long)INITRET;  
-    if(strncmp(name, "Main process", 12) == 0) {
-        tss->ss0 = (0x3 << 3);
-        tss->esp0 = (long) saddr;
+    // if(strncmp(name, "Main process", 12) == 0) {
+        // tss->ss0 = (0x3 << 3);
+        // tss->esp0 = (long) saddr;
+        // tss->ds = (0x3 << 3);
         ESP = (uint32)saddr_user;
         *--saddr = SS;
         *--saddr = ESP;
@@ -108,34 +109,34 @@ pid32	create(
         *--saddr = 0;			/* %esi */
         *--saddr = 0;			/* %edi */
         *pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
-    }else{
-        /* The following entries on the stack must match what ctxsw	*/
-        /*   expects a saved process state to contain: ret address,	*/
-        /*   ebp, interrupt mask, flags, registers, and an old SP	*/
+    // }else{
+    //     /* The following entries on the stack must match what ctxsw	*/
+    //     /*   expects a saved process state to contain: ret address,	*/
+    //     /*   ebp, interrupt mask, flags, registers, and an old SP	*/
 
-        *--saddr = (long)funcaddr;	/* Make the stack look like it's*/
-                        /*   half-way through a call to	*/
-                        /*   ctxsw that "returns" to the*/
-                        /*   new process		*/
-        *--saddr = savsp;		/* This will be register ebp	*/
-                        /*   for process exit		*/
-        savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
-        *--saddr = 0x00000200;		/* New process runs with	*/
-                        /*   interrupts enabled		*/
+    //     *--saddr = (long)funcaddr;	/* Make the stack look like it's*/
+    //                     /*   half-way through a call to	*/
+    //                     /*   ctxsw that "returns" to the*/
+    //                     /*   new process		*/
+    //     *--saddr = savsp;		/* This will be register ebp	*/
+    //                     /*   for process exit		*/
+    //     savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
+    //     *--saddr = 0x00000200;		/* New process runs with	*/
+    //                     /*   interrupts enabled		*/
 
-        /* Basically, the following emulates an x86 "pushal" instruction*/
+    //     /* Basically, the following emulates an x86 "pushal" instruction*/
 
-        *--saddr = 0;			/* %eax */
-        *--saddr = 0;			/* %ecx */
-        *--saddr = 0;			/* %edx */
-        *--saddr = 0;			/* %ebx */
-        *--saddr = 0;			/* %esp; value filled in below	*/
-        pushsp = saddr;			/* Remember this location	*/
-        *--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
-        *--saddr = 0;			/* %esi */
-        *--saddr = 0;			/* %edi */
-        *pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
-    }
+    //     *--saddr = 0;			/* %eax */
+    //     *--saddr = 0;			/* %ecx */
+    //     *--saddr = 0;			/* %edx */
+    //     *--saddr = 0;			/* %ebx */
+    //     *--saddr = 0;			/* %esp; value filled in below	*/
+    //     pushsp = saddr;			/* Remember this location	*/
+    //     *--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
+    //     *--saddr = 0;			/* %esi */
+    //     *--saddr = 0;			/* %edi */
+    //     *pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
+    // }
     prptr->prstkptr_user = (char *)saddr_user;
 	restore(mask);
 	return pid;

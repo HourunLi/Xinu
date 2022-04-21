@@ -3,7 +3,7 @@
 // Syscall list to dispatch in kernel space
 
 const void *syscalls[] = {
-	NULL,
+	&addargs,       // 0
 	&create,		// 1
 	&resume,		// 2
 	&recvclr,		// 3
@@ -28,16 +28,49 @@ uint32 do_syscall(uint32 id, uint32 args_count, ...) {
 
 	// You may need to pass these veriables to kernel side:
 
-	uint32 *ptr_return_value = return_value;
-	args_count;
+	uint32 *ptr_return_value = &return_value;
+	// args_count;
 	uint32 *args_array = 1 + &args_count;
+    uint32 callee = syscalls[id];
 
-	// Your code here ...
+    /**
+     * @eax = ptr_return_value
+     * @edi = args_count
+     * @esi = args_array
+     * @edx = callee
+     */
 
+    asm("movl %0, %%edi;"
+        :
+        :"m"(args_count)
+        :"%edi"
+    );
+
+    asm("movl %0, %%esi;"
+        :
+        :"m"(args_array)
+        :"%esi"
+    );
+
+    asm("movl %0, %%edx;"
+        :
+        :"m"(callee)
+        :"%edx"
+    );
+
+    asm("movl %0, %%eax;"
+        :
+        :"m"(ptr_return_value)
+        :"%eax"
+    );
+
+    asm("int $48");
 	return return_value;
 }
 
-void sys_uprintf() {
-    kprintf("hello from sysprintf\n");
-    return;
+int sys_uprintf(int a) {
+    int s = a+1;
+    int s1 = s*2;
+    // printf("hello from sysprintf\n");
+    return s1;
 }

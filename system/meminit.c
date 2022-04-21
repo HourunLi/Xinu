@@ -56,6 +56,7 @@ struct sd gdt_copy[NGD] = {
 {            0,          0,           0,      0x89,            0,        0, },
 };
 
+taskstate tss_copy;
 extern	struct	sd gdt[];	/* Global segment table			*/
 extern taskstate tss[];
 /*------------------------------------------------------------------------
@@ -189,10 +190,11 @@ void	setsegs()
     psd->sd_lobase = ((long)tss) & 0xffff;
     psd->sd_midbase = (((long)tss) & 0xff0000) >> 16;
     psd->sd_hibase = (((long)tss) & 0xff000000) >> 24;
-    kprintf("%x %02x %02x %04x\n", tss, psd->sd_hibase, psd->sd_midbase, psd->sd_lobase);
-    // tss->ss0 = (3 << 3);
-    tss->iomb = (uint16) 0xffff; 
+    // kprintf("%x %02x %02x %04x\n", &tss_copy, psd->sd_hibase, psd->sd_midbase, psd->sd_lobase);
+    tss_copy.ss0 = (0x3 << 3);
+    tss_copy.iomb = (uint16) 0xffff;
     // ltss();
     
 	memcpy(gdt, gdt_copy, sizeof(gdt_copy));
+    memcpy(tss, &tss_copy, sizeof(tss_copy));
 }

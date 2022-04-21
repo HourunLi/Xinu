@@ -199,7 +199,6 @@ mmap_search_done:
 	 * Set up the global descriptor table.
 	 */
 	call	setsegs
-
 	lgdt	gdtr
 	/*
 	 * Reload segment registers; load code segment by a far
@@ -215,6 +214,10 @@ gdt1:
 	movl	$0x18, %eax	/* SS descriptor 3 */
 	movw	%ax, %ss
 	
+    pushl   %eax
+    movl    $56, %eax
+    ltr     %ax
+    popl    %eax
 	/*
 	 * Call the nulluser to initialize the system
 	 */
@@ -357,9 +360,9 @@ cpuid:
 ret_k2u:
     iret
 
-    .global ltss
-    .type ltss, @function 
-ltss:
-    movl $56, %eax
-    ltr  %ax
-    ret
+;     .global ltss
+;     .type ltss, @function 
+; ltss:
+;     movl $56, %eax
+;     ltr  %ax
+;     ret

@@ -26,7 +26,6 @@ shellcmd xsh_help(int nargs, char *args[])
 					/*   line of formatted output	*/
 	
 	/* For argument '--help', emit help about the 'help' command	*/
-
 	if (nargs == 2 && strncmp(args[1], "--help", 7) == 0) {
 
 		syscall_printf("Use:\n");
@@ -74,7 +73,7 @@ shellcmd xsh_help(int nargs, char *args[])
 			(*cmdtab[i].cfunc) (2, argv);
 			return 0;
 		}
-		syscall_printf("%s: no such command as '%s'\n", args[0], args[1]);
+		syscall_printf("The first args is %s: no such command as '%s'\n", args[0], args[1]);
 		return 1;
 	}
 

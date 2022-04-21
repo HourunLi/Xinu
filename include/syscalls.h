@@ -7,6 +7,7 @@
 #define do_generic_syscall(rettype, id, ...) \
 		((rettype)do_syscall(id, va_args_len(__VA_ARGS__), __VA_ARGS__))
 
+#define SYSCALL_ADDARGS     0
 #define SYSCALL_CREATE		1
 #define SYSCALL_RESUME		2
 #define SYSCALL_RECVCLR		3
@@ -22,4 +23,4 @@
 #define SYSCALL_KILL		13
 #define SYSCALL_GETPID		14
 
-void sys_uprintf();
+int sys_uprintf();

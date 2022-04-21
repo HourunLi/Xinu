@@ -5,6 +5,7 @@
         "*.wxs": "javascript",
         "cstdarg": "c",
         "xinu.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "functional": "c"
     }
 }

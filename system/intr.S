@@ -472,27 +472,44 @@ _Xint46:
 
     .global _Xint48
 _Xint48:
+    ; pushal
     pushl %ds
     pushl %es
     pushl %fs
     pushl %gs
+    pushl %eax
     movl $(0x2 << 3), %eax
     movw %ax, %ds
     movw %ax, %es
     movw %ax, %fs
     movw %ax, %gs
-    call sys_uprintf
+    movl %edi, %ebx
+    leal (%esi, %edi, 4), %esi
+    jmp .L2
+.L3: 
+    subl $4, %esi
+    pushl (%esi)
+    subl $1, %edi
+.L2: 
+    cmpl $0, %edi
+    jg .L3
+    call *%edx
+    leal (%esp, %ebx, 4), %esp
+    movl (%esp), %ebx
+    movl %eax, (%ebx)
+    popl %eax
     popl %gs
     popl %fs
     popl %es
     popl %ds
+    ; popal
     iret
 
 
-    .global uprintf
-uprintf:
-    int $48
-    ret
+    ; .global uprintf
+; uprintf:
+;     int $48
+;     ret
 
 /*------------------------------------------------------------------------
  * _Xint? - array of exception/interrupt entry points that are
