@@ -7,7 +7,7 @@
 
 extern	void	start(void);	/* Start of Xinu code			*/
 extern	void	*_end;		/* End of Xinu code			*/
-
+extern  uint32  freePageCount;
 /* Function prototypes */
 
 extern	void main(void);	/* Main is the first process created	*/
@@ -53,19 +53,8 @@ void	nulluser()
 	/* Initialize the system */
 
 	sysinit();
-
-	/* Output Xinu memory layout */
-	free_mem = 0;
-	for (memptr = memlist.mnext; memptr != NULL;
-						memptr = memptr->mnext) {
-		free_mem += memptr->mlength;
-	}
 	
-	kprintf("%10d bytes of free memory.  Free list:\n", free_mem);
-	for (memptr=memlist.mnext; memptr!=NULL;memptr = memptr->mnext) {
-	    kprintf("           [0x%08X to 0x%08X]\n",
-		(uint32)memptr, ((uint32)memptr) + memptr->mlength - 1);
-	}
+	kprintf("%10d bytes of free memory.  Free list:\n", freePageCount*KB(4));
 
 	kprintf("%10d bytes of Xinu code.\n",
 		(uint32)&etext - (uint32)&text);
@@ -147,9 +136,13 @@ static	void	sysinit()
 	initevec();
 	
 	/* Initialize free memory list */
-	
-	// meminit();
 
+	meminit();
+
+    /* Initialize virtual memory */
+    PageDirectory kernelPageDirectory = initialKernelPageTable();
+
+    enablePaging(kernelPageDirectory);
 	/* Initialize system variables */
 
 	/* Count the Null process as the first process in the system */
@@ -172,14 +165,15 @@ static	void	sysinit()
 
 	/* Initialize the Null process entry */	
 
-	prptr = &proctab[NULLPROC];
-	prptr->prstate = PR_CURR;
-	prptr->prprio = 0;
+	prptr                   = &proctab[NULLPROC];
+	prptr->prstate          = PR_CURR;
+	prptr->prprio           = 0;
 	strncpy(prptr->prname, "prnull", 7);
-	prptr->prstkbase = getstk(NULLSTK);
-	prptr->prstklen = NULLSTK;
-	prptr->prstkptr = 0;
-	currpid = NULLPROC;
+	prptr->prstkbase        = (PHYSICAL_PAGE_RECORD_ADDR - 4);
+	prptr->prstklen         = KB(4);
+    prptr->pageDirectory    = kernelPageDirectory;
+	prptr->prstkptr         = 0;
+	currpid                 = NULLPROC;
 	
 	/* Initialize semaphores */
 

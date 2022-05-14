@@ -224,7 +224,6 @@ gdt1:
     ltr     %ax
     popl    %eax
 
-    call    meminit      # Memory initialize function
     /*
     movl    kpgdir, %eax
     movl    %eax, %cr3
