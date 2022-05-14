@@ -23,6 +23,6 @@ void appendFreePhysicalPage(uint32 addr, uint32 size) {
     for(uint32 phy = roundpage(addr); phy < eaddr; phy += VM_PAGE_SIZE) {
         uint32 *RecordAddr =  freePages + (freePageCount++)*4;
         *RecordAddr = phy;
-        // kprintf("%dth record %8x at %8x\n", freePageCount, phy, RecordAddr);
+        kprintf("%dth record %8x at %8x\n", freePageCount, phy, RecordAddr);
     }
 }
