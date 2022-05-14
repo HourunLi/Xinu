@@ -58,4 +58,5 @@ void    initializePageTableEntry(PageTable pageTable, uint32 entryID, uint32 phy
 void    initializePageDirectoryEntry(PageDirectory pageDirectory, uint32 entryID, uint32 physicalAddr, uint8 present, uint8 userSupervisor);
 void    loadCr3(PageDirectory pageDirectoryPhyAddr);
 void    setCr0();
+
 PageDirectory initialKernelPageTable();
