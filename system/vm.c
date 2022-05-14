@@ -83,9 +83,22 @@ PageDirectory initialKernelPageTable() {
     PageTable pageTable_0 = (PageTable)allocatePhysicalPage();
     for(uint32 virtualAddr = 0, physicalAddr = 0; physicalAddr < ((uint32)&end + KB(8)); virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = (virtualAddr >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1);
-        initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, 1, 0);
+        uint32 userSupervisor = 0, present = 1;
+        if(MB(1) <= physicalAddr && physicalAddr < (uint32)&end) {
+            userSupervisor = 1;
+        }
+
+        if( (uint32)&end <= physicalAddr && physicalAddr < ((uint32)&end + KB(4)) ) {
+            present = 0;
+        }
+        initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, present, userSupervisor);
     }
-    initializePageDirectoryEntry(kernelPageDirectory, 0, pageTable_0, 1, 0);
+    /* 
+     * Because we need access code and data in user mode
+     * The 0th page directory must be user-accessble
+     * So the userSupervisor must be 1   
+     */
+    initializePageDirectoryEntry(kernelPageDirectory, 0, pageTable_0, 1, 1);
 
     /* Initialize the 1th page direcoty entry*/
     PageTable pageTable_1 = (PageTable)allocatePhysicalPage();
@@ -94,10 +107,11 @@ PageDirectory initialKernelPageTable() {
         uint32 pageTableEntryID = (virtualAddr >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1);
         initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 0);
     }
+    /* Free physical page must be kernel accessble? */
     initializePageDirectoryEntry(kernelPageDirectory, 1, pageTable_1, 1, 0);
 
     /* Initialize the 2th page direcoty entry -- the page directory itself(self to self mapping)*/
-    nitializePageDirectoryEntry(kernelPageDirectory, 2, kernelPageDirectory, 1, 0);
+    initializePageDirectoryEntry(kernelPageDirectory, 2, kernelPageDirectory, 1, 1);
 
     return kernelPageDirectory;
 }
