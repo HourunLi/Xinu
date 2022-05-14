@@ -88,7 +88,7 @@ int32	initevec()
 
 	_8259_setirmask();
 
-        return OK;
+    return OK;
 }
 
 int32	set_evec_trap(uint32 xnum, uint32 handler)

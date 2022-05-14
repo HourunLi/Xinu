@@ -1,3 +1,5 @@
+#ifndef __KERNEL_H__
+#define __KERNEL_H__
 /* kernel.h */
 
 /* General type declarations used throughout the kernel */
@@ -111,3 +113,5 @@ typedef struct TASKSTATE {
     unsigned short t;          // Trap on task switch
     unsigned short iomb;       // I/O map base address
 }taskstate;
+
+#endif

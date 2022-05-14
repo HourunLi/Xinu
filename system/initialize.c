@@ -148,7 +148,7 @@ static	void	sysinit()
 	
 	/* Initialize free memory list */
 	
-	meminit();
+	// meminit();
 
 	/* Initialize system variables */
 

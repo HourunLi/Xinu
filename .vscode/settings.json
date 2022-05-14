@@ -6,6 +6,8 @@
         "cstdarg": "c",
         "xinu.h": "c",
         "string.h": "c",
-        "functional": "c"
+        "functional": "c",
+        "cstdlib": "cpp",
+        "queue.h": "c"
     }
 }

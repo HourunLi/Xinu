@@ -59,29 +59,27 @@ struct sd gdt_copy[NGD] = {
 taskstate tss_copy;
 extern	struct	sd gdt[];	/* Global segment table			*/
 extern taskstate tss[];
+extern uint32 freePageCount;
+extern void *freePages;
 /*------------------------------------------------------------------------
  * meminit - initialize memory bounds and the free memory list
  *------------------------------------------------------------------------
  */
 void	meminit(void) {
-
-	struct	memblk	*memptr;	/* Ptr to memory block		*/
 	struct	mbmregion	*mmap_addr;	/* Ptr to mmap entries		*/
 	struct	mbmregion	*mmap_addrend;	/* Ptr to end of mmap region	*/
-	struct	memblk	*next_memptr;	/* Ptr to next memory block	*/
 	uint32	next_block_length;	/* Size of next memory block	*/
+
+    /* Initialize the freePage from end+8KB ~ end+8KB+4MB*/
+    // uint32  lastFreePhysicalpage = 0;
+    memset((void*)PHYSICAL_PAGE_RECORD_ADDR, 0, MB(4));
 
 	mmap_addr = (struct mbmregion*)NULL;
 	mmap_addrend = (struct mbmregion*)NULL;
 
-	/* Initialize the free list */
-	memptr = &memlist;
-	memptr->mnext = (struct memblk *)NULL;
-	memptr->mlength = 0;
-
 	/* Initialize the memory counters */
 	/*    Heap starts at the end of Xinu image */
-	minheap = (void*)&end;
+	minheap = PHYSICAL_PAGE_RECORD_END_ADDR;
 	maxheap = minheap;
 
 	/* Check if Xinu was loaded using the multiboot specification	*/
@@ -100,8 +98,10 @@ void	meminit(void) {
 	mmap_addrend = (struct mbmregion*)((uint8*)mmap_addr + bootinfo->mmap_length);
 
 	/* Read mmap blocks and initialize the Xinu free memory list	*/
+    // kprintf("end is %8x\n", (uint32)minheap);
+    kprintf("free page record start at %8x\n", PHYSICAL_PAGE_RECORD_ADDR);
 	while(mmap_addr < mmap_addrend) {
-
+        kprintf("%8x ~ %8x\n", (uint32)mmap_addr->base_addr, (uint32)mmap_addr->base_addr+(uint32)mmap_addr->length);
 		/* If block is not usable, skip to next block */
 		if(mmap_addr->type != MULTIBOOT_MMAP_TYPE_USABLE) {
 			mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
@@ -124,35 +124,31 @@ void	meminit(void) {
 		if((mmap_addr->base_addr <= (uint32)minheap) &&
 		  ((mmap_addr->base_addr + mmap_addr->length) >
 		  (uint32)minheap)) {
-
-			/* This is the first free block, base address is the minheap */
-			next_memptr = (struct memblk *)roundmb(minheap);
-
-			/* Subtract Xinu image from length of block */
-			next_block_length = (uint32)truncmb(mmap_addr->base_addr + mmap_addr->length - (uint32)minheap);
+            appendFreePhysicalPage(
+                /* This is the first free block, base address is the minheap */
+                roundmb((uint32)minheap), 
+                /* Subtract Xinu image from length of block */
+                truncmb(mmap_addr->base_addr + mmap_addr->length - (uint32)minheap));
 		} else {
-
-			/* Handle a free memory block other than the first one */
-			next_memptr = (struct memblk *)roundmb(mmap_addr->base_addr);
-
-			/* Initialize the length of the block */
-			next_block_length = (uint32)truncmb(mmap_addr->length);
+            appendFreePhysicalPage(
+                /* Handle a free memory block other than the first one */
+                roundmb(mmap_addr->base_addr), 
+                /* Initialize the length of the block */
+                truncmb(mmap_addr->length));
 		}
-
-		/* Add then new block to the free list */
-		memptr->mnext = next_memptr;
-		memptr = memptr->mnext;
-		memptr->mlength = next_block_length;
-		memlist.mlength += next_block_length;
 
 		/* Move to the next mmap block */
 		mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
 	}
 
-	/* End of all mmap blocks, and so end of Xinu free list */
-	if(memptr) {
-		memptr->mnext = (struct memblk *)NULL;
-	}
+    // kprintf("freePageCount is %d\n", freePageCount);
+    // uint8 t = 0;
+    // for(int cnt = 0; cnt < freePageCount; cnt++) {
+    //     t = (++t) % 10; 
+    //     if(!t)
+    //         kprintf("\n");
+    //     kprintf("%8x\t", *(uint32 *)((uint32)freePages + 4*cnt));
+    // }
 }
 
 // static inline void ltr(uint16 sel) {

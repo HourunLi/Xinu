@@ -83,9 +83,9 @@ mbootheader:  				# Beginning of multiboot header, embedded in ELF header
 	.long   MULTIBOOT_HEADER_MAGIC
 	.long   MULTIBOOT_HEADER_FLAGS
 	.long   -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-	.long   mbootheader 		# Begin a.out kludge: header address
+	.long   mbootheader     # Begin a.out kludge: header address
 	.long   text			# load address
-   	.long   bss			# load end address
+   	.long   bss			    # load end address
 	.long   ebss			# bss end address
 	.long   start			# Entry address: end of multiboot header, end of a.out kludge
 
@@ -95,8 +95,8 @@ start:
 	/*
 	 * Store the boot arguments.
 	 */
-	movl	%eax, bootsign
-	movl	%ebx, bootinfo
+	movl	%eax, bootsign  # Magic number for MULTIBOOT_HEADER_MAGIC
+	movl	%ebx, bootinfo  # Bootloader map 
 	
 	/*
 	 * Test the multiboot signature and memory map flags
@@ -105,11 +105,12 @@ start:
 	jne	halt
 	testb	$MULTIBOOT_BOOTINFO_MMAP, (%ebx)
 	je	halt
-	
+
 	/*
 	 * Iterate through the memory map segments to find the highest
 	 *   address that will fit the null stack
 	 */
+/*
 	movl	0x30(%ebx), %ecx	# Load mmap_addr
 	movl	0x2C(%ebx), %edx 	# Load mmap_length
 	andl	$0xfffffffc, %edx	# Load mmap_end
@@ -128,22 +129,22 @@ mmap_search_start:
 	# skip memory segment if it is within the memory for Xinu
 	movl	4(%ecx), %eax		# Load memory address of segment
 	movl	12(%ecx), %ebx		# Load segment size
-	add	%ebx, %eax		# Find end of memory segment
-	movl	$end, %ebx		# Load end of xinu
-	cmpl	%ebx, %eax		# Compare segment and xinu end
+	add	    %ebx, %eax		    # Find end of memory segment
+	movl	$end, %ebx		    # Load end of xinu
+	cmpl	%ebx, %eax		    # Compare segment and xinu end
 	jle	mmap_search_next_sgmt	# Skip if segment is within xinu
 	
 	# Segment is usable and not within xinu memory region
 	#   Check if it is big enough to hold the null stack
 	#   Subtract off any memory location that overlaps the
-	#     the Xinu memory region
+	#   the Xinu memory region
 	movl	4(%ecx), %eax		# Load memory address of segment
-	movl	$end, %ebx		# Load end of xinu
-	subl	%eax, %ebx		# Determine overlap
+	movl	$end, %ebx		    # Load end of xinu
+	subl	%eax, %ebx		    # Determine overlap
 	movl	12(%ecx), %eax		# Load segment size
-	cmpl	$0x0, %ebx		# Check if overlap is greater than zero
+	cmpl	$0x0, %ebx		    # Check if overlap is greater than zero
 	jl	mmap_search_no_overlap
-	subl	%ebx, %eax		# Subtract overlap size
+	subl	%ebx, %eax		    # Subtract overlap size
 mmap_search_no_overlap:
 	cmpl	$NULLSTK, %eax		# Compare with nullstack size
 	jl	mmap_search_next_sgmt
@@ -153,14 +154,14 @@ mmap_search_no_overlap:
 	#   check if segment is larger than current stack pointer
 	movl	4(%ecx), %eax		# Load memory address of segment
 	movl	12(%ecx), %ebx		# Load segment size
-	addl	%ebx, %eax		# Retrieve segment end
-	cmpl	%esp, %eax		# Compare segment and stack pointer
+	addl	%ebx, %eax		    # Retrieve segment end
+	cmpl	%esp, %eax		    # Compare segment and stack pointer
 	jl	mmap_search_next_sgmt	# Skip segment if less than
 	
 	# Segment is big enough to hold the nullstack
 	#   and larger than the current stack pointer
 	#   Use the end of the new segment as the null stack
-	#     Round to the nearest block and subtract 4 (for STACKMAGIC)
+	#   Round to the nearest block and subtract 4 (for STACKMAGIC)
 	movl	%eax, %esp
 	addl	$0x7, %esp
 	andl	$0xFFFFFFF8, %esp
@@ -168,12 +169,13 @@ mmap_search_no_overlap:
 
 mmap_search_next_sgmt:
 	movl	(%ecx), %eax		# Load the entry_size
-	addl	%eax, %ecx		# mmap_addr += entry_size + 4
+	addl	%eax, %ecx		    # mmap_addr += entry_size + 4
 	addl	$0x4, %ecx
 	jmp	mmap_search_start
 	
 mmap_search_done:
-
+*/
+    movl    $(end + 8188), %esp
 	# Stack pointer set continue with boot
 	movl	%esp, %ebp
 	
@@ -202,7 +204,7 @@ mmap_search_done:
 	lgdt	gdtr
 	/*
 	 * Reload segment registers; load code segment by a far
-	 * jump
+	 * jump  0x8 for the CS register and gdt1 for the EIP register
 	 */
 	ljmp	$0x8, $gdt1	/* CS descriptor 1 */
 gdt1:
@@ -214,14 +216,23 @@ gdt1:
 	movl	$0x18, %eax	/* SS descriptor 3 */
 	movw	%ax, %ss
 	
+	/*
+	 * Set up the global tss register.
+	 */
     pushl   %eax
     movl    $56, %eax
     ltr     %ax
     popl    %eax
-	/*
-	 * Call the nulluser to initialize the system
-	 */
-	call	nulluser
+
+    call    meminit      # Memory initialize function
+    /*
+    movl    kpgdir, %eax
+    movl    %eax, %cr3
+    movl    %cr0, %eax
+    orl     $(CR0_PG | CR0_WP), %eax
+    movl    %eax, %cr0
+	*/
+    call	nulluser
 	call	halt
 
 	.globl	inb
