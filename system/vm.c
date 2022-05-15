@@ -44,6 +44,16 @@ void freePhysicalPage(uint32 physicalAddr) {
     return;
 }
 
+void allocateVirtualAddr(uint32 virtualAddr, uint32 size) {
+    
+}
+void allocateVirtualPage() {
+
+}
+
+void freeVirtualPage() {
+
+}
 void initializePageDirectoryEntry(PageDirectory pageDirectory, uint32 entryID, uint32 physicalAddr, uint8 present, uint8 userSupervisor) {
     PageDirectoryEntry *entryPtr    = (PageDirectoryEntry *)((uint32)pageDirectory + entryID * PAGE_ENTRY_SIZE);
     entryPtr->pageTableBaseAddress  = physicalAddr;
@@ -67,7 +77,7 @@ void initializePageTableEntry(PageTable pageTable, uint32 entryID, uint32 physic
     entryPtr->globalPage        = 0;
     entryPtr->reserved          = 0;
     entryPtr->dirty             = 0;
-    entryPtr->accessed          = 0;
+    entryPtr->accessed          = 0; 
     entryPtr->cacheDisabled     = 0;
     entryPtr->writeThrough      = 1;
     entryPtr->userSupervisor    = userSupervisor;
@@ -77,9 +87,10 @@ void initializePageTableEntry(PageTable pageTable, uint32 entryID, uint32 physic
 }
 /* Return the physical address of kernel page directory*/
 PageDirectory initialKernelPageTable() {
+    /* kernel page directory page 4KB*/
     PageDirectory kernelPageDirectory = (PageDirectory)allocatePhysicalPage();
 
-    /* Initialize the 0th page direcoty entry*/
+    /* Initialize the 0th page */
     PageTable pageTable_0 = (PageTable)allocatePhysicalPage();
     for(uint32 virtualAddr = 0, physicalAddr = 0; physicalAddr < ((uint32)&end + KB(8)); virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = (virtualAddr >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1);
@@ -91,23 +102,28 @@ PageDirectory initialKernelPageTable() {
         if( (uint32)&end <= physicalAddr && physicalAddr < ((uint32)&end + KB(4)) ) {
             present = 0;
         }
+        /* Initialize the first page */
         initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, present, userSupervisor);
     }
     /* 
+     * Initialize the 0th page directory entry
      * Because we need access code and data in user mode
      * The 0th page directory must be user-accessble
      * So the userSupervisor must be 1   
      */
     initializePageDirectoryEntry(kernelPageDirectory, 0, pageTable_0, 1, 1);
 
-    /* Initialize the 1th page direcoty entry*/
+    /* Initialize the 1th page */
     PageTable pageTable_1 = (PageTable)allocatePhysicalPage();
     for(uint32 virtualAddr = MB(4), physicalAddr = ((uint32)&end + KB(8)); physicalAddr < ((uint32)&end + KB(8) + MB(8)); 
             virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = (virtualAddr >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1);
         initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 0);
     }
-    /* Free physical page must be kernel accessble? */
+    /* 
+     * Initialize the 1th page directory entry
+     * Free physical page must be kernel accessble? 
+     */
     initializePageDirectoryEntry(kernelPageDirectory, 1, pageTable_1, 1, 0);
 
     /* Initialize the 2th page direcoty entry -- the page directory itself(self to self mapping)*/
@@ -115,6 +131,7 @@ PageDirectory initialKernelPageTable() {
 
     return kernelPageDirectory;
 }
+
 
 bool8   enablePaging(PageDirectory pageDirectoryPhyAddr) {
     loadCr3(pageDirectoryPhyAddr);
