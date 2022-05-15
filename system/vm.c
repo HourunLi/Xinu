@@ -44,16 +44,53 @@ void freePhysicalPage(uint32 physicalAddr) {
     return;
 }
 
-void allocateVirtualAddr(uint32 virtualAddr, uint32 size) {
-    
-}
-void allocateVirtualPage() {
 
+void allocateVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32 size, uint8 userSupervisor) {
+    uint32 endVirtualAddr = virtualAddr+size;
+
+    for(uint32 addr = virtualAddr; addr < endVirtualAddr; addr += KB(4)) {
+        allocateVirtualPage(pageDirectory, addr, userSupervisor);
+    }
+}
+
+PageTableEntry *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8 userSupervisor) {
+    uint32 pgdirEntryID = getPageDirectoryEntryID(virtualAddr);
+    uint32 pgEntryID = getPageEntryID(virtualAddr);
+    uint32 pgOffset  = getPageOffset(virtualAddr);
+    PageTable pageTable;
+    PageDirectoryEntry *pgdirEntryPtr;
+    PageTableEntry *pgEntryPtr, *pageEntry;
+
+    /* Get the virtual addr of page directory if paging enabled*/
+    if(getPagingEnabled()) {
+        pageDirectory = VIRTUAL_PAGE_DIRECTORY_ADDR;
+    }
+    /* If the entry in page directory or page is not existent, then allocate */
+    pgdirEntryPtr = (PageDirectoryEntry *)((uint32)pageDirectory + pgdirEntryID * PAGE_ENTRY_SIZE);
+    /* entry in page directory is null */
+    if(pgdirEntryPtr->present == 0) {
+        pageTable = (PageTable)allocatePhysicalPage();
+        initializePageDirectoryEntry(pageDirectory, pgdirEntryID, pageTable, 1, userSupervisor);
+    }
+
+    /* Get the virtual addr of page table if paging enabled*/
+    if(getPagingEnabled()) {
+        pageTable = MB(8) + pgdirEntryID * KB(4);
+    }
+    pgEntryPtr = (PageTableEntry *)((uint32)pageTable + pgEntryID * PAGE_ENTRY_SIZE);
+    if(pgEntryPtr->present == 0) {
+        pageEntry = (PageTableEntry *)allocatePhysicalPage();
+        initializePageTableEntry(pageTable, pgEntryID, pageEntry, 1, userSupervisor);
+        return pageEntry;
+    }
+
+    return pgEntryPtr->pageBaseAddress;
 }
 
 void freeVirtualPage() {
 
 }
+
 void initializePageDirectoryEntry(PageDirectory pageDirectory, uint32 entryID, uint32 physicalAddr, uint8 present, uint8 userSupervisor) {
     PageDirectoryEntry *entryPtr    = (PageDirectoryEntry *)((uint32)pageDirectory + entryID * PAGE_ENTRY_SIZE);
     entryPtr->pageTableBaseAddress  = physicalAddr;
@@ -85,6 +122,23 @@ void initializePageTableEntry(PageTable pageTable, uint32 entryID, uint32 physic
     entryPtr->present           = present;
     return;
 }
+
+void clearPageTableEntry(PageTable pageTable, uint32 entryID) {
+    PageTableEntry *entryPtr = (PageTableEntry *)((uint32)pageTable + entryID * PAGE_ENTRY_SIZE);
+    entryPtr->pageBaseAddress   = 0;
+    entryPtr->avail             = 0;
+    entryPtr->globalPage        = 0;
+    entryPtr->reserved          = 0;
+    entryPtr->dirty             = 0;
+    entryPtr->accessed          = 0; 
+    entryPtr->cacheDisabled     = 0;
+    entryPtr->writeThrough      = 0;
+    entryPtr->userSupervisor    = 0;
+    entryPtr->readOrWrite       = 0;
+    entryPtr->present           = 0;
+    return;
+}    
+
 /* Return the physical address of kernel page directory*/
 PageDirectory initialKernelPageTable() {
     /* kernel page directory page 4KB*/
@@ -161,3 +215,15 @@ void setCr0() {
     );
     return;
 }
+
+bool8 getPagingEnabled() {
+    uint32 cr0;
+    asm volatile (
+        "mov %%cr0, %0;"
+        :"=r"(cr0)
+        :
+        :
+    );
+    return (cr0 & CR0_PG) != 0;
+}
+
