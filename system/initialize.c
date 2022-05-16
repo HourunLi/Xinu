@@ -135,7 +135,7 @@ static	void	sysinit()
 
 	initevec();
 	
-	/* Initialize free memory list */
+	/* Initialize free memory pages*/
 
 	meminit();
 
@@ -169,10 +169,13 @@ static	void	sysinit()
 	prptr->prstate          = PR_CURR;
 	prptr->prprio           = 0;
 	strncpy(prptr->prname, "prnull", 7);
-	prptr->prstkbase        = (PHYSICAL_PAGE_RECORD_ADDR - 4);
+	prptr->prstkbase        = (KERNEL_STACK_BASE - B(4));
 	prptr->prstklen         = KB(4);
+    prptr->prstkbase_user   = (USER_STACK_BASE - B(4));
+    prptr->prstklen_user    = 0;
     prptr->pageDirectory    = kernelPageDirectory;
 	prptr->prstkptr         = 0;
+    prptr->prstkptr_user    = 0;
 	currpid                 = NULLPROC;
 	
 	/* Initialize semaphores */

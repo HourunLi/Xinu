@@ -8,7 +8,7 @@ extern taskstate tss[];
  *  resched  -  Reschedule processor to highest priority eligible process
  *------------------------------------------------------------------------
  */
-void	resched(void)		/* Assumes interrupts are disabled	*/
+void	resched(int32 flag)		/* Assumes interrupts are disabled	*/
 {
 	struct procent *ptold;	/* Ptr to table entry for old process	*/
 	struct procent *ptnew;	/* Ptr to table entry for new process	*/
@@ -42,7 +42,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	ptnew->prstate = PR_CURR;
 	preempt = QUANTUM;		/* Reset time slice for process	*/
     tss->esp0 = (long)ptnew->prstkptr;
-	ctxsw(&ptold->prstkptr, &ptnew->prstkptr, ptnew->pageDirectory);
+	ctxsw(&ptold->prstkptr, &ptnew->prstkptr, ptnew->pageDirectory, flag);
 
 	/* Old process returns here when resumed */
 
@@ -71,7 +71,7 @@ status	resched_cntl(		/* Assumes interrupts are disabled	*/
 			return SYSERR;
 		}
 		if ( (--Defer.ndefers == 0) && Defer.attempt ) {
-			resched();
+			resched(0);
 		}
 		return OK;
 

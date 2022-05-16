@@ -38,6 +38,6 @@ void	clkhandler(void)
 
 	if((--preempt) <= 0) {
 		preempt = QUANTUM;
-		resched();
+		resched(0);
 	}
 }

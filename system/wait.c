@@ -31,7 +31,7 @@ syscall	wait(
 		prptr->prstate = PR_WAIT;	/* Set state to waiting	*/
 		prptr->prsem = sem;		/* Record semaphore ID	*/
 		enqueue(currpid,semptr->squeue);/* Enqueue on semaphore	*/
-		resched();			/*   and reschedule	*/
+		resched(0);			/*   and reschedule	*/
 	}
 
 	restore(mask);

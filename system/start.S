@@ -175,7 +175,7 @@ mmap_search_next_sgmt:
 	
 mmap_search_done:
 */
-    movl    $(end + 8188), %esp
+    movl    $(end + 8192 - 4), %esp
 	# Stack pointer set continue with boot
 	movl	%esp, %ebp
 	

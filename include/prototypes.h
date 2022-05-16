@@ -42,7 +42,7 @@ extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
 		do_generic_syscall(pid32, SYSCALL_CREATE, __VA_ARGS__)
 
 /* in file ctxsw.S */
-extern	void	ctxsw(void *, void *, PageDirectory);
+extern	void	ctxsw(void *, void *, PageDirectory, int32);
 
 /* in file exit.c */
 extern	void	exit(void);
@@ -333,7 +333,7 @@ extern	umsg32	recvclr(void);
 extern	umsg32	recvtime(int32);
 
 /* in file resched.c */
-extern	void	resched(void);
+extern	void	resched(int32);
 extern	status	resched_cntl(int32);
 
 /* in file intutils.S */

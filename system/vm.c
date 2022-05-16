@@ -4,33 +4,22 @@ uint32 kpgdir;
 uint32 freePageCount = 0;
 void *freePages = PHYSICAL_PAGE_RECORD_ADDR;
 
-// void recordFreePhysicalPage(uint32 addr, uint32 size) {
-//     uint32 eaddr = addr + size;
-//     for(uint32 i = lastFreePhysicalPageRecordAddress + 4; i < RecordAddress(roundpage(addr)); i += 4) {
-//         uint32 *recordAddr = (uint32 *)i;
-//         *recordAddr = lastFreePhysicalPageRecordAddress;
-//     }
-//     for(uint32 i = roundpage(addr); i < eaddr; i += VM_PAGE_SIZE) {
-//         uint32 *recordAddr = (uint32 *)RecordAddress(i);
-//         *recordAddr = lastFreePhysicalPageRecordAddress;
-//         lastFreePhysicalPageRecordAddress = recordAddr;
-//     }
-//     return;
-// }
-
 void appendFreePhysicalPage(uint32 addr, uint32 size) {
+    /* It is in initialize stage and paging is not enabled */
     uint32 eaddr = addr + size;
     for(uint32 phy = roundpage(addr); phy < eaddr; phy += VM_PAGE_SIZE) {
-        uint32 *RecordAddr =  freePages + (freePageCount++)*4;
+        uint32 *RecordAddr =  (uint32 *)((uint32)freePages + (freePageCount++)*4);
         *RecordAddr = phy;
         kprintf("%dth record %8x at %8x\n", freePageCount, phy, RecordAddr);
     }
 }
 
 void* allocatePhysicalPage() {
-    if (freePageCount == 0) return NULL;
+    if (freePageCount == 0) {
+        kprintf("There is not free physical pages\n");
+        return NULL;
+    }
     void *physicalPage = *(uint32 *)((uint32)freePages + (--freePageCount)*4);
-    memset(physicalPage, 0, KB(4));
     return physicalPage;
 }
 
@@ -53,7 +42,7 @@ void allocateVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32
     }
 }
 
-PageTableEntry *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8 userSupervisor) {
+void *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8 userSupervisor) {
     uint32 pgdirEntryID = getPageDirectoryEntryID(virtualAddr);
     uint32 pgEntryID = getPageEntryID(virtualAddr);
     uint32 pgOffset  = getPageOffset(virtualAddr);
@@ -75,7 +64,7 @@ PageTableEntry *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualA
 
     /* Get the virtual addr of page table if paging enabled*/
     if(getPagingEnabled()) {
-        pageTable = MB(8) + pgdirEntryID * KB(4);
+        pageTable = MB(8) + pgdirEntryID * VM_PAGE_SIZE;
     }
     pgEntryPtr = (PageTableEntry *)((uint32)pageTable + pgEntryID * PAGE_ENTRY_SIZE);
     if(pgEntryPtr->present == 0) {
@@ -87,9 +76,52 @@ PageTableEntry *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualA
     return pgEntryPtr->pageBaseAddress;
 }
 
-void freeVirtualPage() {
-
+void freeVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32 size) {
+    uint32 endVirtualAddr = virtualAddr+size;
+    for(uint32 addr = virtualAddr; addr < endVirtualAddr; addr += KB(4)) {
+        freeVirtualPage(pageDirectory, addr);
+    }
+    return;
 }
+
+void freeVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr) {
+    uint32 pgdirEntryID = getPageDirectoryEntryID(virtualAddr);
+    uint32 pgEntryID = getPageEntryID(virtualAddr);
+    uint32 pgOffset  = getPageOffset(virtualAddr);
+    PageTable pageTable;
+    PageDirectoryEntry *pgdirEntryPtr;
+    PageTableEntry *pgEntryPtr, *pageEntry;
+
+    /* Get the virtual addr of page directory if paging enabled*/
+    if(getPagingEnabled()) {
+        pageDirectory = VIRTUAL_PAGE_DIRECTORY_ADDR;
+    }
+
+    /* If the entry in page directory or page is not existent, then allocate */
+    pgdirEntryPtr = (PageDirectoryEntry *)((uint32)pageDirectory + pgdirEntryID * PAGE_ENTRY_SIZE);
+    /* entry in page directory is null */
+    if(pgdirEntryPtr->present == 0) {
+        kprintf("Error: Can't find page directory entry in page directory\n");
+        return;
+    }
+
+    /* Get the virtual addr of page table if paging enabled*/
+    if(getPagingEnabled()) {
+        pageTable = MB(8) + pgdirEntryID * KB(4);
+    } else{
+        pageTable = pgdirEntryPtr->pageTableBaseAddress;
+    }
+
+    pgEntryPtr = (PageTableEntry *)((uint32)pageTable + pgEntryID * PAGE_ENTRY_SIZE);
+    if(pgEntryPtr->present == 0) {
+        kprintf("Error: Can't find page entry in page table\n");    
+        return;
+    }
+    freePhysicalPage(pgEntryPtr->pageBaseAddress);
+    memset(pgEntryPtr, 0, B(4));
+    return;
+}
+
 
 void initializePageDirectoryEntry(PageDirectory pageDirectory, uint32 entryID, uint32 physicalAddr, uint8 present, uint8 userSupervisor) {
     PageDirectoryEntry *entryPtr    = (PageDirectoryEntry *)((uint32)pageDirectory + entryID * PAGE_ENTRY_SIZE);
@@ -137,17 +169,17 @@ void clearPageTableEntry(PageTable pageTable, uint32 entryID) {
     entryPtr->readOrWrite       = 0;
     entryPtr->present           = 0;
     return;
-}    
+}
 
 /* Return the physical address of kernel page directory*/
 PageDirectory initialKernelPageTable() {
-    /* kernel page directory page 4KB*/
+    /* kernel page directory page 4KB */
     PageDirectory kernelPageDirectory = (PageDirectory)allocatePhysicalPage();
 
     /* Initialize the 0th page */
     PageTable pageTable_0 = (PageTable)allocatePhysicalPage();
-    for(uint32 virtualAddr = 0, physicalAddr = 0; physicalAddr < ((uint32)&end + KB(8)); virtualAddr += KB(4), physicalAddr += KB(4)) {
-        uint32 pageTableEntryID = (virtualAddr >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1);
+    for(uint32 virtualAddr = 0, physicalAddr = 0; physicalAddr < PHYSICAL_PAGE_RECORD_ADDR; virtualAddr += KB(4), physicalAddr += KB(4)) {
+        uint32 pageTableEntryID = getPageEntryID(virtualAddr);
         uint32 userSupervisor = 0, present = 1;
         if(MB(1) <= physicalAddr && physicalAddr < (uint32)&end) {
             userSupervisor = 1;
@@ -169,9 +201,9 @@ PageDirectory initialKernelPageTable() {
 
     /* Initialize the 1th page */
     PageTable pageTable_1 = (PageTable)allocatePhysicalPage();
-    for(uint32 virtualAddr = MB(4), physicalAddr = ((uint32)&end + KB(8)); physicalAddr < ((uint32)&end + KB(8) + MB(8)); 
+    for(uint32 virtualAddr = MB(4), physicalAddr = PHYSICAL_PAGE_RECORD_ADDR; physicalAddr < PHYSICAL_PAGE_RECORD_END_ADDR; 
             virtualAddr += KB(4), physicalAddr += KB(4)) {
-        uint32 pageTableEntryID = (virtualAddr >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1);
+        uint32 pageTableEntryID = getPageEntryID(virtualAddr);
         initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 0);
     }
     /* 
