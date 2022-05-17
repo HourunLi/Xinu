@@ -31,9 +31,9 @@ ctxsw:
         /* Check whether need to free last process's memory source      */
         testl    $1, %edx
         jz      .skipFree
-.free
+.free:
         call    freeLastProcessMemmoryResource
-.skipFree
+.skipFree:
 		/* Restore new seg. registers here, if multiple allowed         */
 		popal			        /* Restore general registers	        */
 		movl	4(%esp), %ebp	/* Pick up ebp before restoring	        */

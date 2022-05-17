@@ -1,6 +1,4 @@
 #include<xinu.h>
-uint32 lastFreePhysicalPageRecordAddress; // Last free physical page addr
-uint32 kpgdir;
 uint32 freePageCount = 0;
 void *freePages = PHYSICAL_PAGE_RECORD_ADDR;
 
@@ -10,7 +8,7 @@ void appendFreePhysicalPage(uint32 addr, uint32 size) {
     for(uint32 phy = roundpage(addr); phy < eaddr; phy += VM_PAGE_SIZE) {
         uint32 *RecordAddr =  (uint32 *)((uint32)freePages + (freePageCount++)*4);
         *RecordAddr = phy;
-        kprintf("%dth record %8x at %8x\n", freePageCount, phy, RecordAddr);
+        // kprintf("%dth record %8x at %8x\n", freePageCount, phy, RecordAddr);
     }
 }
 
@@ -125,7 +123,7 @@ void freeVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr) {
 
 void initializePageDirectoryEntry(PageDirectory pageDirectory, uint32 entryID, uint32 physicalAddr, uint8 present, uint8 userSupervisor) {
     PageDirectoryEntry *entryPtr    = (PageDirectoryEntry *)((uint32)pageDirectory + entryID * PAGE_ENTRY_SIZE);
-    entryPtr->pageTableBaseAddress  = physicalAddr;
+    entryPtr->pageTableBaseAddress  = (physicalAddr >> PAGE_OFFSET_BIT);
     entryPtr->avail                 = 0;
     entryPtr->globalPage            = 0;
     entryPtr->pageSize              = 0;
@@ -141,7 +139,7 @@ void initializePageDirectoryEntry(PageDirectory pageDirectory, uint32 entryID, u
 
 void initializePageTableEntry(PageTable pageTable, uint32 entryID, uint32 physicalAddr, uint8 present, uint8 userSupervisor) {
     PageTableEntry *entryPtr    = (PageTableEntry *)((uint32)pageTable + entryID * PAGE_ENTRY_SIZE);
-    entryPtr->pageBaseAddress   = physicalAddr;
+    entryPtr->pageBaseAddress   = (physicalAddr >> PAGE_OFFSET_BIT);
     entryPtr->avail             = 0;
     entryPtr->globalPage        = 0;
     entryPtr->reserved          = 0;
@@ -189,7 +187,7 @@ PageDirectory initialKernelPageTable() {
             present = 0;
         }
         /* Initialize the first page */
-        initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, present, userSupervisor);
+        initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, 1, 1);
     }
     /* 
      * Initialize the 0th page directory entry
@@ -204,13 +202,13 @@ PageDirectory initialKernelPageTable() {
     for(uint32 virtualAddr = MB(4), physicalAddr = PHYSICAL_PAGE_RECORD_ADDR; physicalAddr < PHYSICAL_PAGE_RECORD_END_ADDR; 
             virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = getPageEntryID(virtualAddr);
-        initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 0);
+        initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 1);
     }
     /* 
      * Initialize the 1th page directory entry
      * Free physical page must be kernel accessble? 
      */
-    initializePageDirectoryEntry(kernelPageDirectory, 1, pageTable_1, 1, 0);
+    initializePageDirectoryEntry(kernelPageDirectory, 1, pageTable_1, 1, 1);
 
     /* Initialize the 2th page direcoty entry -- the page directory itself(self to self mapping)*/
     initializePageDirectoryEntry(kernelPageDirectory, 2, kernelPageDirectory, 1, 1);
@@ -219,9 +217,10 @@ PageDirectory initialKernelPageTable() {
 }
 
 
-bool8   enablePaging(PageDirectory pageDirectoryPhyAddr) {
+void   enablePaging(PageDirectory pageDirectoryPhyAddr) {
     loadCr3(pageDirectoryPhyAddr);
     setCr0();
+    freePages = VIRTUAL_PAGE_RECORD_ADDR;
 }
 
 void loadCr3(PageDirectory pageDirectoryPhyAddr) {
@@ -238,9 +237,9 @@ void setCr0() {
     // Enable paging
     uint32 flag = CR0_PG | CR0_WP;
     asm volatile (
-        "mov    %%cr0, %%eax;       \
-        or      %0, %%eax;          \
-        mov     %%eax, %%cr0;"
+        "movl    %%cr0, %%eax;       \
+        orl      %0, %%eax;          \
+        movl     %%eax, %%cr0;"
         :
         : "m"(flag)
         : "eax"
@@ -251,7 +250,7 @@ void setCr0() {
 bool8 getPagingEnabled() {
     uint32 cr0;
     asm volatile (
-        "mov %%cr0, %0;"
+        "movl %%cr0, %0;"
         :"=r"(cr0)
         :
         :

@@ -99,9 +99,9 @@ void	meminit(void) {
 
 	/* Read mmap blocks and initialize the Xinu free memory list	*/
     // kprintf("end is %8x\n", (uint32)minheap);
-    kprintf("free page record start at %8x\n", PHYSICAL_PAGE_RECORD_ADDR);
+    // kprintf("free page record start at %8x\n", PHYSICAL_PAGE_RECORD_ADDR);
 	while(mmap_addr < mmap_addrend) {
-        kprintf("%8x ~ %8x\n", (uint32)mmap_addr->base_addr, (uint32)mmap_addr->base_addr+(uint32)mmap_addr->length);
+        // kprintf("%8x ~ %8x\n", (uint32)mmap_addr->base_addr, (uint32)mmap_addr->base_addr+(uint32)mmap_addr->length);
 		/* If block is not usable, skip to next block */
 		if(mmap_addr->type != MULTIBOOT_MMAP_TYPE_USABLE) {
 			mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
@@ -141,14 +141,14 @@ void	meminit(void) {
 		mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
 	}
 
-    // kprintf("freePageCount is %d\n", freePageCount);
-    // uint8 t = 0;
-    // for(int cnt = 0; cnt < freePageCount; cnt++) {
-    //     t = (++t) % 10; 
-    //     if(!t)
-    //         kprintf("\n");
-    //     kprintf("%8x\t", *(uint32 *)((uint32)freePages + 4*cnt));
-    // }
+    kprintf("freePageCount is %d\n", freePageCount);
+    uint8 t = 0;
+    for(int cnt = 0; cnt < freePageCount; cnt++) {
+        t = (++t) % 10; 
+        if(!t)
+            kprintf("\n");
+        kprintf("%8x\t", *(uint32 *)((uint32)freePages + 4*cnt));
+    }
 }
 
 // static inline void ltr(uint16 sel) {

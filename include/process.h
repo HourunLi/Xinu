@@ -1,5 +1,5 @@
 /* process.h - isbadpid */
-
+#include "vm.h"
 /* Maximum number of processes in the system */
 
 #ifndef NPROC

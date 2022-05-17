@@ -1,4 +1,5 @@
 #include "syscalls.h"
+#include "vm.h"
 
 extern uint32 do_syscall(uint32 id, uint32 args_count, ...);
 

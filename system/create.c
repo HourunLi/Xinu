@@ -15,22 +15,29 @@ void initializeTable0(PageTable tableAddr, Page kernelStack_phy) {
     uint32 pageTableEntryID;
     for(; physicalAddr < (uint32)&end; virtualAddr += KB(4), physicalAddr += KB(4)) {
         pageTableEntryID = getPageEntryID(virtualAddr);
-        uint32 userSupervisor = 0, present = 1;
+        uint32 userSupervisor = 0;
         if(MB(1) <= physicalAddr && physicalAddr < (uint32)&end) {
             userSupervisor = 1;
         }
         /* Initialize the first page */
-        initializePageTableEntry(tableAddr, pageTableEntryID, physicalAddr, present, userSupervisor);
+        initializePageTableEntry(tableAddr, pageTableEntryID, physicalAddr, 1, 1);
     }
 
-    uint32 virtualAddr = KERNEL_STACK_BASE - KB(4);
-    initializePageTableEntry(tableAddr, getPageEntryID(virtualAddr), kernelStack_phy, 1, 0);
+    virtualAddr = KERNEL_STACK_BASE - KB(4);
+    initializePageTableEntry(tableAddr, getPageEntryID(virtualAddr), kernelStack_phy, 1, 1);
 }
 
 void initializeTablex(PageTable tablex_vir, uint32 virtualAddr, Page user_stack_phy) {
     initializePageTableEntry(tablex_vir, getPageEntryID(virtualAddr), user_stack_phy, 1, 1);
 }
 
+uint32 *kernelStackAdptor(uint32 *esp) {
+    return (uint32 *)((uint32)esp + KERNEL_STACK_BASE - TMP_VIRTUAL_ADDR - 3 * VM_PAGE_SIZE);
+}
+
+uint32 *userStackAdaptor(uint32 *esp) {
+    return (uint32 *)((uint32)esp + USER_STACK_BASE - TMP_VIRTUAL_ADDR - 5 * VM_PAGE_SIZE);
+}
 pid32	create(
 	  void		*funcaddr,	/* Address of the function	    */
 	  uint32	ssize,		/* Stack size in bytes		    */
@@ -46,8 +53,8 @@ pid32	create(
 	struct	procent	*prptr;		/* Pointer to proc. table entry         */
 	int32		i;
 	uint32		*a;		        /* Points to list of args	            */
-	uint32		*saddr = (KERNEL_STACK_BASE - KB(4)); /* Stack address  */
-    uint32		*saddr_user = (USER_STACK_BASE - KB(4));
+	uint32		*saddr; /* Stack address  */
+    uint32		*saddr_user;
     uint32      CS = 0x23;
     uint32      SS = 0x33;
     uint32      ESP;
@@ -68,8 +75,8 @@ pid32	create(
 	/* Initialize process table entry for new process */
 	prptr->prstate = PR_SUSP;	/* Initial state is suspended	*/
 	prptr->prprio = priority;
-    prptr->prstkbase = (char *) saddr;
-    prptr->prstkbase_user = (char *) saddr_user;
+    prptr->prstkbase = (char *)(KERNEL_STACK_BASE - KB(4));
+    prptr->prstkbase_user = (char *)(USER_STACK_BASE - KB(4));
     prptr->prstklen = KB(4);    /*kernel stack size is always 4KB*/
 	prptr->prstklen_user = ssize;
 	prptr->prname[PNMLEN-1] = NULLCH;
@@ -86,24 +93,30 @@ pid32	create(
 
     /* Allocate the space for new process's user and kernel stack */
     PageDirectory newpgdir_vir = TMP_VIRTUAL_ADDR;  // end + 8KB
-    void *newpgdir_phy = allocateVirtualPage(prptr->pageDirectory, newpgdir_vir, 0);
-    PageTable table0_vir = TMP_VIRTUAL_ADDR+KB(4);  // end + 12KB
-    void *table0_phy = allocateVirtualPage(prptr->pageDirectory, table0_vir, 0);
-    Page kernel_stack_vir = TMP_VIRTUAL_ADDR+KB(8); // end + 16KB
-    void *kernel_stack_phy = allocateVirtualPage(prptr->pageDirectory, kernel_stack_vir, 0);
-    PageTable tablex_vir = TMP_VIRTUAL_ADDR+KB(12); // end + 20KB
-    void *tablex_phy = allocateVirtualPage(prptr->pageDirectory, tablex_vir, 0);
+    void *newpgdir_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, newpgdir_vir, 1);
+    PageTable table0_vir = TMP_VIRTUAL_ADDR + 1 * VM_PAGE_SIZE;  // end + 12KB
+    void *table0_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, table0_vir, 1);
+    Page kernel_stack_vir = TMP_VIRTUAL_ADDR + 2 * VM_PAGE_SIZE; // end + 16KB
+    void *kernel_stack_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, kernel_stack_vir, 1);
+    PageTable tablex_vir = TMP_VIRTUAL_ADDR + 3 * VM_PAGE_SIZE; // end + 20KB
+    void *tablex_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, tablex_vir, 1);
 
+    /* initialize page table 0 (0KB - 4KB)*/
     initializeTable0(table0_vir, kernel_stack_phy);
+    /* initialize page directory 0th entry*/
     initializePageDirectoryEntry(newpgdir_vir, 0, table0_phy, 1, 1);
-    initializePageDirectoryEntry(newpgdir_vir, 1, ((PageDirectoryEntry *)(VIRTUAL_PAGE_DIRECTORY_ADDR + B(4)))->pageTableBaseAddress, 1, 0);
+    /* 
+     * initialize child process's page directory 1th entry
+     * By directly using parent's page directory 1th entry    
+     */
+    initializePageDirectoryEntry(newpgdir_vir, 1, ((((PageDirectoryEntry *)(VIRTUAL_PAGE_DIRECTORY_ADDR + B(4)))->pageTableBaseAddress) << PAGE_OFFSET_BIT), 1, 1);
     initializePageDirectoryEntry(newpgdir_vir, 2, newpgdir_phy, 1, 1);
 
     /* Initialize user stack(size is ssize)*/
-    Page user_stack_vir = TMP_VIRTUAL_ADDR+KB(16); // end + 24KB
+    Page user_stack_vir = TMP_VIRTUAL_ADDR + 4 * VM_PAGE_SIZE; // end + 24KB
     for(uint32 addr = USER_STACK_BASE - ssize; addr < USER_STACK_BASE; addr += KB(4)) {
         clearPageTableEntry(MB(8), getPageEntryID(user_stack_vir));
-        void *user_stack_phy = allocateVirtualPage(prptr->pageDirectory, user_stack_vir, 0);
+        void *user_stack_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, user_stack_vir, 1);
         initializeTablex(tablex_vir, addr, user_stack_phy);
     }
     
@@ -114,7 +127,8 @@ pid32	create(
     saddr_user = (uint32 *)(TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE - B(4));
 	*saddr = STACKMAGIC;
     *saddr_user = STACKMAGIC;
-	savsp = (uint32)saddr;
+	// savsp = (uint32)saddr;
+    savsp = (uint32)kernelStackAdptor(saddr);
 
 	/* Push arguments */
 	a = (uint32 *)(&nargs + 1);	/* Start of args		*/
@@ -128,7 +142,8 @@ pid32	create(
 	*--saddr = (long)INITRET;	/* Push on return address	*/
     *--saddr_user = (long)INITRET;  
  
-    ESP = (uint32)saddr_user;
+    // ESP = (uint32)saddr_user;
+    ESP = (uint32)userStackAdaptor(saddr_user);
     *--saddr = SS;
     *--saddr = ESP;
     *--saddr = 0x00000200;		/* New process runs with	*/
@@ -138,8 +153,10 @@ pid32	create(
 
     //set ebp
     *--saddr = savsp;		/* This will be register ebp	*/
-    savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
-    
+    // savsp = (uint32) saddr;		/* Start of frame for ctxsw	*/
+    savsp = (uint32)kernelStackAdptor(saddr);		/* Start of frame for ctxsw	*/
+
+
     //pushfl
     *--saddr = 0x00000200;		/* New process runs with	*/
     
@@ -153,12 +170,13 @@ pid32	create(
     *--saddr = savsp;		/* %ebp (while finishing ctxsw)	*/
     *--saddr = 0;			/* %esi */
     *--saddr = 0;			/* %edi */
-    *pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
-
-    saddr = (uint32 *)((uint32)saddr + KERNEL_STACK_BASE - TMP_VIRTUAL_ADDR - 3 * VM_PAGE_SIZE);
-    saddr_user = (uint32 *)((uint32)saddr_user + USER_STACK_BASE - TMP_VIRTUAL_ADDR - 5 * VM_PAGE_SIZE);
-    prptr->prstkptr = (char *)saddr;
-    prptr->prstkptr_user = (char *)saddr_user;
+    // *pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
+    *pushsp = (unsigned long) (prptr->prstkptr = (char *)kernelStackAdptor(saddr));
+    // saddr = (uint32 *)((uint32)saddr + KERNEL_STACK_BASE - TMP_VIRTUAL_ADDR - 3 * VM_PAGE_SIZE);
+    // saddr_user = (uint32 *)((uint32)saddr_user + USER_STACK_BASE - TMP_VIRTUAL_ADDR - 5 * VM_PAGE_SIZE);
+    prptr->prstkptr = (char *)kernelStackAdptor(saddr);	
+    prptr->prstkptr_user = (char *)userStackAdaptor(saddr_user);
+    prptr->pageDirectory = newpgdir_phy;
     /* clear the temporary connection between kid and  parent process*/
     for(uint32 addr = TMP_VIRTUAL_ADDR; addr < TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE; addr += VM_PAGE_SIZE) {
         clearPageTableEntry(MB(8), getPageEntryID(addr));

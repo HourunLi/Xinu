@@ -54,9 +54,9 @@ void	nulluser()
 
 	sysinit();
 	
-	kprintf("%10d bytes of free memory.  Free list:\n", freePageCount*KB(4));
+	kprintf("\n%10d bytes of free memory.\n", freePageCount*KB(4));
 
-	kprintf("%10d bytes of Xinu code.\n",
+	kprintf("\n%10d bytes of Xinu code.\n",
 		(uint32)&etext - (uint32)&text);
 	kprintf("           [0x%08X to 0x%08X]\n",
 		(uint32)&text, (uint32)&etext - 1);
