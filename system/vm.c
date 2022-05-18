@@ -224,6 +224,7 @@ PageDirectory initialKernelPageTable() {
 
 
 void enablePaging(PageDirectory pageDirectoryPhyAddr) {
+    kprintf("Attention: enable paging!\n");
     loadCr3(pageDirectoryPhyAddr);
     setCr0();
     freePages = VIRTUAL_PAGE_RECORD_ADDR;

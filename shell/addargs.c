@@ -77,7 +77,7 @@ status	addargs(
 	/*	string area plus the offset of this argument		*/
 
 	for (aptr=argloc, i=0; i < ntok; i++) {
-		*aptr++ = (uint32) (argstr + tok[i]);
+		*aptr++ = (uint32) (userStackAdaptor_lastPage_tmp2normal(argstr + tok[i], prptr->prstklen_user));
 	}
 
 	/* Add a null pointer to the args array */

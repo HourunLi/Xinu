@@ -102,8 +102,8 @@ pid32	create(
 	/* Initialize process table entry for new process */
 	prptr->prstate = PR_SUSP;	/* Initial state is suspended	*/
 	prptr->prprio = priority;
-    prptr->prstkbase = (char *)(KERNEL_STACK_BASE - KB(4));
-    prptr->prstkbase_user = (char *)(USER_STACK_BASE - KB(4));
+    prptr->prstkbase = (char *)(KERNEL_STACK_BASE - B(4));
+    prptr->prstkbase_user = (char *)(USER_STACK_BASE - B(4));
     prptr->prstklen = KB(4);        /*kernel stack size is always 4KB*/
 	prptr->prstklen_user = ssize;   /*USER stack size is round to 4KB*n */
 	prptr->prname[PNMLEN-1] = NULLCH;
@@ -160,7 +160,7 @@ pid32	create(
     
     initializePageDirectoryEntry(newpgdir_vir, getPageDirectoryEntryID(USER_STACK_BASE-KB(4)), tablex_phy, 1, 1);
 	/* Initialize stack as if the process was called		*/
-    
+
     saddr = (uint32 *)(TMP_VIRTUAL_ADDR + 3 * VM_PAGE_SIZE - B(4));
     saddr_user = (uint32 *)(TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE - B(4));
 	*saddr = STACKMAGIC;
