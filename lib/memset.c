@@ -1,5 +1,5 @@
 /* memset.c - memset */
-
+#include <kernel.h>
 /*------------------------------------------------------------------------
  *  memset  -  Set a block ot n bytes to the same value and return a
  *			   pointer to the memory
@@ -13,7 +13,7 @@ void	*memset(
 {
     register int i;
     char *cp = (char *)s;
-
+    kprintf("memset %8x to %8x with %d\n", (uint32)s, (uint32)s + n, c);
     for (i = 0; i < n; i++)
     {
         *cp = (unsigned char)c;

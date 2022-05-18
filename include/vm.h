@@ -14,6 +14,7 @@
 #define USER_STACK_BASE                     0XFE000000
 #define KERNEL_STACK_BASE                   PHYSICAL_PAGE_RECORD_ADDR
 #define TMP_VIRTUAL_ADDR                    PHYSICAL_PAGE_RECORD_ADDR
+#define PAGE_TABLE0                         MB(8)        
 #define VIRTUAL_PAGE_DIRECTORY_ADDR         ((2 << 22) | (2 << 12))
 #define getPageDirectoryEntryID(x)          ( ((uint32)x >> 22) & ((1 << PAGE_DIRECTORY_BIT)-1) )
 #define getPageEntryID(x)                   ( ((uint32)x >> PAGE_OFFSET_BIT) & ((1 << PAGE_TABLE_BIT)-1) )
@@ -24,7 +25,14 @@
 #define truncpage(x)                        ((uint32)x & (~(VM_PAGE_SIZE-1)))
 #define RecordAddress(x)                    ( ((uint32)x / KB(4)) *4 + MB(4) )
 #define Physical(x)                         ( (((uint32)x - MB(4)) / 4) * KB(4))
-
+#define invlpg(va)                          do {                    \
+                                                asm volatile(       \
+                                                    "invlpg (%0);"  \
+                                                    :               \
+                                                    : "r"((va))     \
+                                                    : "memory"      \
+                                                    );              \
+                                            } while(0)              \
 /* Be aware of the order of the fileds */
 typedef struct PageTableEntry {
     uint32 present              : 1;

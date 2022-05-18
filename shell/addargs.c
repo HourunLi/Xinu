@@ -2,6 +2,23 @@
 
 #include <xinu.h>
 #include "shprototypes.h"
+/* adapt the temporary kernel stack pointer(esp) to normal kernel stack mode*/
+extern uint32 *kernelStackAdptor_tmp2normal(uint32 *esp);
+
+/* adapt the temporary user stack pointer(esp) to normal user stack mode*/
+extern uint32 *userStackAdaptor_tmp2normal(uint32 *esp);
+
+/* adapt the temporary user stack pointer in last page(esp) to normal user stack mode*/
+extern uint32 *userStackAdaptor_lastPage_tmp2normal(uint32 *esp, uint32 ssize);
+
+/* adapt the normal kernel stack pointer(esp) to normal kernel stack mode*/
+extern uint32 *kernelStackAdptor_normal2tmp(uint32 *esp);
+
+/* adapt the normal user stack pointer(esp) to temporary user stack mode*/
+extern uint32 *userStackAdaptor_normal2tmp(uint32 *esp);
+
+/* adapt the normal user stack pointer in last page(esp) to temporary user stack mode*/
+extern uint32 *userStackAdaptor_lastPage_normal2tmp(uint32 *esp);
 
 /*------------------------------------------------------------------------
  *  addargs  -  Add local copy of argv-style arguments to the stack of
@@ -48,8 +65,8 @@ status	addargs(
 	/*	args array will be stored followed by the argument	*/
 	/*	strings							*/
 	
-	aloc = (uint32) (prptr->prstkbase_user
-		- prptr->prstklen + sizeof(uint32));
+	// aloc = (uint32) (prptr->prstkbase_user - prptr->prstklen_user + sizeof(uint32));
+	aloc = (uint32) (userStackAdaptor_lastPage_normal2tmp(prptr->prstkbase_user - prptr->prstklen_user + sizeof(uint32)));
 	argloc = (uint32*) ((aloc + 3) & ~0x3);	/* round multiple of 4	*/
 
 	/* Compute the first location beyond args array for the strings	*/
@@ -74,13 +91,11 @@ status	addargs(
 
 	/* Find the second argument in process's stack */
 
-	for (search = (uint32 *)prptr->prstkptr_user;
-	     search < (uint32 *)prptr->prstkbase_user; search++) {
-
+	for (search = (uint32 *)userStackAdaptor_normal2tmp(prptr->prstkptr_user);
+	     search < (uint32 *)userStackAdaptor_normal2tmp(prptr->prstkbase_user); search++) {
 		/* If found, replace with the address of the args vector*/
-
 		if (*search == (uint32)dummy) {
-			*search = (uint32)argloc;
+			*search = (uint32)(userStackAdaptor_lastPage_tmp2normal(argloc, prptr->prstklen_user));
 			restore(mask);
 			return OK;
 		}
