@@ -193,7 +193,7 @@ PageDirectory initialKernelPageTable() {
             present = 0;
         }
         /* Initialize the first page */
-        initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, 1, 1);
+        initializePageTableEntry(pageTable_0, pageTableEntryID, physicalAddr, present, userSupervisor);
     }
     /* 
      * Initialize the 0th page directory entry
@@ -208,13 +208,13 @@ PageDirectory initialKernelPageTable() {
     for(uint32 virtualAddr = MB(4), physicalAddr = PHYSICAL_PAGE_RECORD_ADDR; physicalAddr < PHYSICAL_PAGE_RECORD_END_ADDR; 
             virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = getPageEntryID(virtualAddr);
-        initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 1);
+        initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 0);
     }
     /* 
      * Initialize the 1th page directory entry
      * Free physical page must be kernel accessble? 
      */
-    initializePageDirectoryEntry(kernelPageDirectory, 1, pageTable_1, 1, 1);
+    initializePageDirectoryEntry(kernelPageDirectory, 1, pageTable_1, 1, 0);
 
     /* Initialize the 2th page direcoty entry -- the page directory itself(self to self mapping)*/
     initializePageDirectoryEntry(kernelPageDirectory, 2, kernelPageDirectory, 1, 1);

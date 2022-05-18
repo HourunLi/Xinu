@@ -20,11 +20,11 @@ void initializeTable0(PageTable tableAddr, Page kernelStack_phy) {
             userSupervisor = 1;
         }
         /* Initialize the first page */
-        initializePageTableEntry(tableAddr, pageTableEntryID, physicalAddr, 1, 1);
+        initializePageTableEntry(tableAddr, pageTableEntryID, physicalAddr, 1, userSupervisor);
     }
 
     virtualAddr = KERNEL_STACK_BASE - KB(4);
-    initializePageTableEntry(tableAddr, getPageEntryID(virtualAddr), kernelStack_phy, 1, 1);
+    initializePageTableEntry(tableAddr, getPageEntryID(virtualAddr), kernelStack_phy, 1, 0);
 }
 
 void initializeTablex(PageTable tablex_vir, uint32 virtualAddr, Page user_stack_phy) {
@@ -141,7 +141,7 @@ pid32	create(
      * initialize child process's page directory 1th entry
      * By directly using parent's page directory 1th entry
      */
-    initializePageDirectoryEntry(newpgdir_vir, 1, ((((PageDirectoryEntry *)(VIRTUAL_PAGE_DIRECTORY_ADDR + B(4)))->pageTableBaseAddress) << PAGE_OFFSET_BIT), 1, 1);
+    initializePageDirectoryEntry(newpgdir_vir, 1, ((((PageDirectoryEntry *)(VIRTUAL_PAGE_DIRECTORY_ADDR + B(4)))->pageTableBaseAddress) << PAGE_OFFSET_BIT), 1, 0);
     initializePageDirectoryEntry(newpgdir_vir, 2, newpgdir_phy, 1, 1);
 
     /* Initialize user stack(size is ssize) */
