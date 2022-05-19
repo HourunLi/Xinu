@@ -1,6 +1,6 @@
 #include<xinu.h>
 uint32 freePageCount = 0;
-void *freePages = PHYSICAL_PAGE_RECORD_ADDR;
+void *freePages = PHY_PAGE_RECORD_ADDR;
 
 void appendFreePhysicalPage(uint32 addr, uint32 size) {
     /* It is in initialize stage and paging is not enabled */
@@ -33,7 +33,7 @@ void freePhysicalPage(uint32 physicalAddr) {
     return;
 }
 
-
+/* Only for heap allocate */
 void allocateVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32 size, uint8 userSupervisor) {
     kprintf("allocateVirtualAddr: Alloc virtual addr %8x with %x bytes\n", virtualAddr, size);
     uint32 endVirtualAddr = virtualAddr+size;
@@ -54,7 +54,7 @@ void *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8
 
     /* Get the virtual addr of page directory if paging enabled*/
     if(getPagingEnabled()) {
-        pageDirectory = VIRTUAL_PAGE_DIRECTORY_ADDR;
+        pageDirectory = VM_PAGE_DIRECTORY_ADDR;
     }
     /* If the entry in page directory or page is not existent, then allocate */
     pgdirEntryPtr = (PageDirectoryEntry *)((uint32)pageDirectory + pgdirEntryID * PAGE_ENTRY_SIZE);
@@ -62,12 +62,12 @@ void *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8
     if(pgdirEntryPtr->present == 0) {
         pageTable = (PageTable)allocatePhysicalPage();
         initializePageDirectoryEntry(pageDirectory, pgdirEntryID, pageTable, 1, userSupervisor);
-        memset(PAGE_TABLE0 + pgdirEntryID * VM_PAGE_SIZE, 0, KB(4));
+        memset(VM_PAGE_TABLE0 + pgdirEntryID * VM_PAGE_SIZE, 0, KB(4));
     }
 
     /* Get the virtual addr of page table if paging enabled*/
     if(getPagingEnabled()) {
-        pageTable = PAGE_TABLE0 + pgdirEntryID * VM_PAGE_SIZE;
+        pageTable = VM_PAGE_TABLE0 + pgdirEntryID * VM_PAGE_SIZE;
     }
     pgEntryPtr = (PageTableEntry *)((uint32)pageTable + pgEntryID * PAGE_ENTRY_SIZE);
     if(pgEntryPtr->present == 0) {
@@ -80,10 +80,14 @@ void *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8
     return (pgEntryPtr->pageBaseAddress) << PAGE_OFFSET_BIT;
 }
 
+/* Only for heap free */
 void freeVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32 size) {
+    kprintf("freeVirtualAddr: free virtual addr %8x with %x bytes\n", virtualAddr, size);
     uint32 endVirtualAddr = virtualAddr+size;
-    for(uint32 addr = virtualAddr; addr < endVirtualAddr; addr += KB(4)) {
+    for(uint32 addr = roundpage(virtualAddr); addr < endVirtualAddr; addr += KB(4)) {
+        memset(addr, 0, KB(4));
         freeVirtualPage(pageDirectory, addr);
+        invlpg(addr);
     }
     return;
 }
@@ -98,7 +102,7 @@ void freeVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr) {
 
     /* Get the virtual addr of page directory if paging enabled*/
     if(getPagingEnabled()) {
-        pageDirectory = VIRTUAL_PAGE_DIRECTORY_ADDR;
+        pageDirectory = VM_PAGE_DIRECTORY_ADDR;
     }
 
     /* If the entry in page directory or page is not existent, then allocate */
@@ -182,7 +186,7 @@ PageDirectory initialKernelPageTable() {
 
     /* Initialize the 0th page */
     PageTable pageTable_0 = (PageTable)allocatePhysicalPage();
-    for(uint32 virtualAddr = 0, physicalAddr = 0; physicalAddr < PHYSICAL_PAGE_RECORD_ADDR; virtualAddr += KB(4), physicalAddr += KB(4)) {
+    for(uint32 virtualAddr = 0, physicalAddr = 0; physicalAddr < PHY_PAGE_RECORD_ADDR; virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = getPageEntryID(virtualAddr);
         uint32 userSupervisor = 0, present = 1;
         if(MB(1) <= physicalAddr && physicalAddr < (uint32)&end) {
@@ -205,7 +209,7 @@ PageDirectory initialKernelPageTable() {
 
     /* Initialize the 1th page */
     PageTable pageTable_1 = (PageTable)allocatePhysicalPage();
-    for(uint32 virtualAddr = MB(4), physicalAddr = PHYSICAL_PAGE_RECORD_ADDR; physicalAddr < PHYSICAL_PAGE_RECORD_END_ADDR; 
+    for(uint32 virtualAddr = MB(4), physicalAddr = PHY_PAGE_RECORD_ADDR; physicalAddr < PHY_PAGE_RECORD_END_ADDR; 
             virtualAddr += KB(4), physicalAddr += KB(4)) {
         uint32 pageTableEntryID = getPageEntryID(virtualAddr);
         initializePageTableEntry(pageTable_1, pageTableEntryID, physicalAddr, 1, 0);
@@ -227,7 +231,7 @@ void enablePaging(PageDirectory pageDirectoryPhyAddr) {
     kprintf("Attention: enable paging!\n");
     loadCr3(pageDirectoryPhyAddr);
     setCr0();
-    freePages = VIRTUAL_PAGE_RECORD_ADDR;
+    freePages = VM_PAGE_RECORD_ADDR;
 }
 
 void loadCr3(PageDirectory pageDirectoryPhyAddr) {

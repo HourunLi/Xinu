@@ -9,6 +9,10 @@
         "functional": "c",
         "cstdlib": "cpp",
         "queue.h": "c",
-        "malloc.h": "c"
+        "malloc.h": "c",
+        "device.h": "c",
+        "kernel.h": "c",
+        "vm.h": "c",
+        "ports.h": "c"
     }
 }

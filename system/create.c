@@ -23,7 +23,7 @@ void initializeTable0(PageTable tableAddr, Page kernelStack_phy) {
         initializePageTableEntry(tableAddr, pageTableEntryID, physicalAddr, 1, userSupervisor);
     }
 
-    virtualAddr = KERNEL_STACK_BASE - KB(4);
+    virtualAddr = VM_KERNEL_STACK_BASE - KB(4);
     initializePageTableEntry(tableAddr, getPageEntryID(virtualAddr), kernelStack_phy, 1, 0);
 }
 
@@ -33,33 +33,33 @@ void initializeTablex(PageTable tablex_vir, uint32 virtualAddr, Page user_stack_
 
 /* adapt the temporary kernel stack pointer(esp) to normal kernel stack mode*/
 uint32 *kernelStackAdptor_tmp2normal(uint32 *esp) {
-    return (uint32 *)((uint32)esp + KERNEL_STACK_BASE - TMP_VIRTUAL_ADDR - 3 * VM_PAGE_SIZE);
+    return (uint32 *)((uint32)esp + VM_KERNEL_STACK_BASE - VM_TMP_ADDR - 3 * VM_PAGE_SIZE);
 }
 /* adapt the temporary user stack pointer(esp) to normal user stack mode*/
 uint32 *userStackAdaptor_tmp2normal(uint32 *esp) {
-    return (uint32 *)((uint32)esp + USER_STACK_BASE - TMP_VIRTUAL_ADDR - 5 * VM_PAGE_SIZE);
+    return (uint32 *)((uint32)esp + VM_USER_STACK_BASE - VM_TMP_ADDR - 5 * VM_PAGE_SIZE);
 }
 
 /* adapt the temporary user stack pointer in last page(esp) to normal user stack mode*/
 uint32 *userStackAdaptor_lastPage_tmp2normal(uint32 *esp, uint32 ssize) {
-    return (uint32 *)((uint32)esp - TMP_VIRTUAL_ADDR - 5 * VM_PAGE_SIZE + truncpage(USER_STACK_BASE - ssize));
-    // return (uint32 *)( TMP_VIRTUAL_ADDR + 6 * VM_PAGE_SIZE - (roundpage(esp) - (uint32)esp) );
+    return (uint32 *)((uint32)esp - VM_TMP_ADDR - 5 * VM_PAGE_SIZE + truncpage(VM_USER_STACK_BASE - ssize));
+    // return (uint32 *)( VM_TMP_ADDR + 6 * VM_PAGE_SIZE - (roundpage(esp) - (uint32)esp) );
 }
 
 /* adapt the normal kernel stack pointer(esp) to normal kernel stack mode*/
 uint32 *kernelStackAdptor_normal2tmp(uint32 *esp) {
-    return (uint32 *)((uint32)esp + TMP_VIRTUAL_ADDR + 3 * VM_PAGE_SIZE - KERNEL_STACK_BASE);
+    return (uint32 *)((uint32)esp + VM_TMP_ADDR + 3 * VM_PAGE_SIZE - VM_KERNEL_STACK_BASE);
 }
 
 /* adapt the normal user stack pointer(esp) to temporary user stack mode*/
 uint32 *userStackAdaptor_normal2tmp(uint32 *esp) {
-    return (uint32 *)((uint32)esp + TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE - USER_STACK_BASE);
+    return (uint32 *)((uint32)esp + VM_TMP_ADDR + 5 * VM_PAGE_SIZE - VM_USER_STACK_BASE);
 }
 
 /* adapt the normal user stack pointer in last page(esp) to temporary user stack mode*/
 uint32 *userStackAdaptor_lastPage_normal2tmp(uint32 *esp) {
-    // return (uint32 *)((uint32)esp + TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE - USER_STACK_BASE);
-    return (uint32 *)( TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE + ((uint32)esp - truncpage(esp)) );
+    // return (uint32 *)((uint32)esp + VM_TMP_ADDR + 5 * VM_PAGE_SIZE - VM_USER_STACK_BASE);
+    return (uint32 *)( VM_TMP_ADDR + 5 * VM_PAGE_SIZE + ((uint32)esp - truncpage(esp)) );
 }
 pid32	create(
 	  void		*funcaddr,	/* Address of the function	    */
@@ -102,8 +102,8 @@ pid32	create(
 	/* Initialize process table entry for new process */
 	prptr->prstate = PR_SUSP;	/* Initial state is suspended	*/
 	prptr->prprio = priority;
-    prptr->prstkbase = (char *)(KERNEL_STACK_BASE - B(4));
-    prptr->prstkbase_user = (char *)(USER_STACK_BASE - B(4));
+    prptr->prstkbase = (char *)(VM_KERNEL_STACK_BASE - B(4));
+    prptr->prstkbase_user = (char *)(VM_USER_STACK_BASE - B(4));
     prptr->prstklen = KB(4);        /*kernel stack size is always 4KB*/
 	prptr->prstklen_user = ssize;   /*USER stack size is round to 4KB*n */
 	prptr->prname[PNMLEN-1] = NULLCH;
@@ -119,19 +119,19 @@ pid32	create(
 	prptr->prdesc[2] = CONSOLE;
 
     /* clear the temporary connection between kid and  parent process*/
-    for(uint32 addr = TMP_VIRTUAL_ADDR; addr < TMP_VIRTUAL_ADDR + 6 * VM_PAGE_SIZE; addr += VM_PAGE_SIZE) {
+    for(uint32 addr = VM_TMP_ADDR; addr < VM_TMP_ADDR + 6 * VM_PAGE_SIZE; addr += VM_PAGE_SIZE) {
         clearPageTableEntry(MB(8), getPageEntryID(addr));
     }
 
     /* Allocate the space for new process's user and kernel stack */
-    PageDirectory newpgdir_vir = TMP_VIRTUAL_ADDR;  // end + 8KB
-    void *newpgdir_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, newpgdir_vir, 1);
-    PageTable table0_vir = TMP_VIRTUAL_ADDR + 1 * VM_PAGE_SIZE;  // end + 12KB
-    void *table0_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, table0_vir, 1);
-    Page kernel_stack_vir = TMP_VIRTUAL_ADDR + 2 * VM_PAGE_SIZE; // end + 16KB
-    void *kernel_stack_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, kernel_stack_vir, 1);
-    PageTable tablex_vir = TMP_VIRTUAL_ADDR + 3 * VM_PAGE_SIZE; // end + 20KB
-    void *tablex_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, tablex_vir, 1);
+    PageDirectory newpgdir_vir = VM_TMP_ADDR;  // end + 8KB
+    void *newpgdir_phy = allocateVirtualPage(VM_PAGE_DIRECTORY_ADDR, newpgdir_vir, 1);
+    PageTable table0_vir = VM_TMP_ADDR + 1 * VM_PAGE_SIZE;  // end + 12KB
+    void *table0_phy = allocateVirtualPage(VM_PAGE_DIRECTORY_ADDR, table0_vir, 1);
+    Page kernel_stack_vir = VM_TMP_ADDR + 2 * VM_PAGE_SIZE; // end + 16KB
+    void *kernel_stack_phy = allocateVirtualPage(VM_PAGE_DIRECTORY_ADDR, kernel_stack_vir, 1);
+    PageTable tablex_vir = VM_TMP_ADDR + 3 * VM_PAGE_SIZE; // end + 20KB
+    void *tablex_phy = allocateVirtualPage(VM_PAGE_DIRECTORY_ADDR, tablex_vir, 1);
 
     /* initialize page table 0 (0KB - 4KB)*/
     initializeTable0(table0_vir, kernel_stack_phy);
@@ -141,28 +141,28 @@ pid32	create(
      * initialize child process's page directory 1th entry
      * By directly using parent's page directory 1th entry
      */
-    initializePageDirectoryEntry(newpgdir_vir, 1, ((((PageDirectoryEntry *)(VIRTUAL_PAGE_DIRECTORY_ADDR + B(4)))->pageTableBaseAddress) << PAGE_OFFSET_BIT), 1, 0);
+    initializePageDirectoryEntry(newpgdir_vir, 1, ((((PageDirectoryEntry *)(VM_PAGE_DIRECTORY_ADDR + B(4)))->pageTableBaseAddress) << PAGE_OFFSET_BIT), 1, 0);
     initializePageDirectoryEntry(newpgdir_vir, 2, newpgdir_phy, 1, 1);
 
     /* Initialize user stack(size is ssize) */
-    Page user_stack_vir = TMP_VIRTUAL_ADDR + 4 * VM_PAGE_SIZE; // end + 24KB
-    for(uint32 addr = USER_STACK_BASE - ssize; addr < USER_STACK_BASE; addr += KB(4)) {
+    Page user_stack_vir = VM_TMP_ADDR + 4 * VM_PAGE_SIZE; // end + 24KB
+    for(uint32 addr = VM_USER_STACK_BASE - ssize; addr < VM_USER_STACK_BASE; addr += KB(4)) {
         clearPageTableEntry(MB(8), getPageEntryID(user_stack_vir));
-        void *user_stack_phy = allocateVirtualPage(VIRTUAL_PAGE_DIRECTORY_ADDR, user_stack_vir, 1);
+        void *user_stack_phy = allocateVirtualPage(VM_PAGE_DIRECTORY_ADDR, user_stack_vir, 1);
         initializeTablex(tablex_vir, addr, user_stack_phy);
-        if(addr == USER_STACK_BASE - ssize) {
+        if(addr == VM_USER_STACK_BASE - ssize) {
             /* initialize the last page table (end + 28KB)*/
-            Page user_stack_lastpage_vir = TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE;
+            Page user_stack_lastpage_vir = VM_TMP_ADDR + 5 * VM_PAGE_SIZE;
             clearPageTableEntry(MB(8), getPageEntryID(user_stack_lastpage_vir));
             initializePageTableEntry(MB(8), getPageEntryID(user_stack_lastpage_vir), user_stack_phy, 1, 1);
         }
     }
     
-    initializePageDirectoryEntry(newpgdir_vir, getPageDirectoryEntryID(USER_STACK_BASE-KB(4)), tablex_phy, 1, 1);
+    initializePageDirectoryEntry(newpgdir_vir, getPageDirectoryEntryID(VM_USER_STACK_BASE-KB(4)), tablex_phy, 1, 1);
 	/* Initialize stack as if the process was called		*/
 
-    saddr = (uint32 *)(TMP_VIRTUAL_ADDR + 3 * VM_PAGE_SIZE - B(4));
-    saddr_user = (uint32 *)(TMP_VIRTUAL_ADDR + 5 * VM_PAGE_SIZE - B(4));
+    saddr = (uint32 *)(VM_TMP_ADDR + 3 * VM_PAGE_SIZE - B(4));
+    saddr_user = (uint32 *)(VM_TMP_ADDR + 5 * VM_PAGE_SIZE - B(4));
 	*saddr = STACKMAGIC;
     *saddr_user = STACKMAGIC;
 	// savsp = (uint32)saddr;
@@ -210,8 +210,8 @@ pid32	create(
     *--saddr = 0;			/* %edi */
     // *pushsp = (unsigned long) (prptr->prstkptr = (char *)saddr);
     *pushsp = (unsigned long) (prptr->prstkptr = (char *)kernelStackAdptor_tmp2normal(saddr));
-    // saddr = (uint32 *)((uint32)saddr + KERNEL_STACK_BASE - TMP_VIRTUAL_ADDR - 3 * VM_PAGE_SIZE);
-    // saddr_user = (uint32 *)((uint32)saddr_user + USER_STACK_BASE - TMP_VIRTUAL_ADDR - 5 * VM_PAGE_SIZE);
+    // saddr = (uint32 *)((uint32)saddr + VM_KERNEL_STACK_BASE - VM_TMP_ADDR - 3 * VM_PAGE_SIZE);
+    // saddr_user = (uint32 *)((uint32)saddr_user + VM_USER_STACK_BASE - VM_TMP_ADDR - 5 * VM_PAGE_SIZE);
     prptr->prstkptr = (char *)kernelStackAdptor_tmp2normal(saddr);	
     prptr->prstkptr_user = (char *)userStackAdaptor_tmp2normal(saddr_user);
     prptr->pageDirectory = newpgdir_phy;

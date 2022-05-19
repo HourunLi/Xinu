@@ -1,3 +1,5 @@
+#pragma once
+
 #include "syscalls.h"
 #include "vm.h"
 

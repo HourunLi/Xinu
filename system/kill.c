@@ -11,7 +11,7 @@
 
 void freeLastProcessMemmoryResource() {
     /* free kernel stack */
-    PageTableEntry *pgEntryPtr = (PageTableEntry *)(KB(4) + getPageEntryID(KERNEL_STACK_BASE-KB(4)) * PAGE_ENTRY_SIZE);
+    PageTableEntry *pgEntryPtr = (PageTableEntry *)(KB(4) + getPageEntryID(VM_KERNEL_STACK_BASE-KB(4)) * PAGE_ENTRY_SIZE);
     freePhysicalPage(((pgEntryPtr->pageBaseAddress) << PAGE_OFFSET_BIT));
     /* free user stack */
     for(pgEntryPtr = KB(8); pgEntryPtr < KB(12); pgEntryPtr += PAGE_ENTRY_SIZE) {
@@ -22,7 +22,7 @@ void freeLastProcessMemmoryResource() {
     /*free page table */
     PageDirectoryEntry *pgdirEntryPtr = 0 * PAGE_ENTRY_SIZE;
     freePhysicalPage((pgdirEntryPtr->pageTableBaseAddress) << PAGE_OFFSET_BIT);
-    pgdirEntryPtr = getPageDirectoryEntryID(USER_STACK_BASE-KB(4)) * PAGE_ENTRY_SIZE;
+    pgdirEntryPtr = getPageDirectoryEntryID(VM_USER_STACK_BASE-KB(4)) * PAGE_ENTRY_SIZE;
     freePhysicalPage((pgdirEntryPtr->pageTableBaseAddress) << PAGE_OFFSET_BIT);
     /* free page directory itself*/
     pgdirEntryPtr = 2 * PAGE_ENTRY_SIZE;
@@ -65,11 +65,11 @@ syscall	kill(
      */
 
     /* Copy the page directory */
-    memcpy(0, VIRTUAL_PAGE_DIRECTORY_ADDR, KB(4));
+    memcpy(0, VM_PAGE_DIRECTORY_ADDR, KB(4));
     /* Copy the 0th page table, for kernel stack */
     memcpy(KB(4), MB(8), VM_PAGE_SIZE);
     /* Copy the xth page table, for user stack */
-    memcpy(KB(8), MB(8) + KB(4) * getPageDirectoryEntryID(USER_STACK_BASE - MB(4)), VM_PAGE_SIZE);
+    memcpy(KB(8), MB(8) + KB(4) * getPageDirectoryEntryID(VM_USER_STACK_BASE - MB(4)), VM_PAGE_SIZE);
 
 	switch (prptr->prstate) {
 	case PR_CURR:

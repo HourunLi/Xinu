@@ -1,5 +1,5 @@
 /* multiboot.h - definitions for the multiboot header */
-
+#pragma once
 struct mbootinfo {
 	uint32	flags;			/* Multiboot information flags	*/
 	uint32	mem_lower;		/* Memory in KB below 1M	*/

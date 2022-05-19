@@ -169,9 +169,9 @@ static	void	sysinit()
 	prptr->prstate          = PR_CURR;
 	prptr->prprio           = 0;
 	strncpy(prptr->prname, "prnull", 7);
-	prptr->prstkbase        = (KERNEL_STACK_BASE - B(4));
+	prptr->prstkbase        = (VM_KERNEL_STACK_BASE - B(4));
 	prptr->prstklen         = KB(4);
-    prptr->prstkbase_user   = (USER_STACK_BASE - B(4));
+    prptr->prstkbase_user   = (VM_USER_STACK_BASE - B(4));
     prptr->prstklen_user    = 0;
     prptr->pageDirectory    = kernelPageDirectory;
 	prptr->prstkptr         = 0;

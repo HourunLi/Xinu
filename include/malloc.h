@@ -1,7 +1,7 @@
 #pragma once
-#include <xinu.h>
+#include <kernel.h>
 
-extern int mm_init (void);
-extern void *mm_malloc (size_t size);
-extern void mm_free (void *ptr);
-extern void *mm_realloc(void *ptr, size_t size);
+extern int mm_init(void);
+extern void *malloc(uint32 size);
+extern void free(void *ptr);
+extern void *realloc(void *ptr, uint32 size);

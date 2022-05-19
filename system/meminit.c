@@ -72,14 +72,14 @@ void	meminit(void) {
 
     /* Initialize the freePage from end+8KB ~ end+8KB+4MB*/
     // uint32  lastFreePhysicalpage = 0;
-    memset((void*)PHYSICAL_PAGE_RECORD_ADDR, 0, MB(4));
+    memset((void*)PHY_PAGE_RECORD_ADDR, 0, MB(4));
 
 	mmap_addr = (struct mbmregion*)NULL;
 	mmap_addrend = (struct mbmregion*)NULL;
 
 	/* Initialize the memory counters */
 	/*    Heap starts at the end of Xinu image */
-	minheap = PHYSICAL_PAGE_RECORD_END_ADDR;
+	minheap = PHY_PAGE_RECORD_END_ADDR;
 	maxheap = minheap;
 
 	/* Check if Xinu was loaded using the multiboot specification	*/
@@ -99,7 +99,7 @@ void	meminit(void) {
 
 	/* Read mmap blocks and initialize the Xinu free memory list	*/
     // kprintf("end is %8x\n", (uint32)minheap);
-    // kprintf("free page record start at %8x\n", PHYSICAL_PAGE_RECORD_ADDR);
+    // kprintf("free page record start at %8x\n", PHY_PAGE_RECORD_ADDR);
 	while(mmap_addr < mmap_addrend) {
         // kprintf("%8x ~ %8x\n", (uint32)mmap_addr->base_addr, (uint32)mmap_addr->base_addr+(uint32)mmap_addr->length);
 		/* If block is not usable, skip to next block */
