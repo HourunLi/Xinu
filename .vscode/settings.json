@@ -8,6 +8,7 @@
         "string.h": "c",
         "functional": "c",
         "cstdlib": "cpp",
-        "queue.h": "c"
+        "queue.h": "c",
+        "malloc.h": "c"
     }
 }
