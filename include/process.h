@@ -1,5 +1,6 @@
 #pragma once
 /* process.h - isbadpid */
+#include "malloc.h"
 #include "vm.h"
 /* Maximum number of processes in the system */
 
@@ -58,6 +59,9 @@ struct procent {	/* Entry in the process table		                */
 	bool8	        prhasmsg;	    /* Nonzero iff msg is valid		    */
 	int16	        prdesc[NDESC];	/* Device descriptors for process	*/
     uint32          heapSize;       /* heap size                        */
+    void            *seg_free_lists[LISTMAX]; /* for heap list          */
+    char            *heap_listp;    /* heap block begining pointer      */
+    uint8            heapIsInitialized; /* flag: heap is initialized     */
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

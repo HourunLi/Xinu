@@ -13,6 +13,8 @@
         "device.h": "c",
         "kernel.h": "c",
         "vm.h": "c",
-        "ports.h": "c"
+        "ports.h": "c",
+        "shprototypes.h": "c",
+        "conf.h": "c"
     }
 }

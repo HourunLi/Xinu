@@ -18,7 +18,9 @@ const void *syscalls[] = {
 	&control,		// 12
 	&kill,			// 13
 	&getpid,		// 14
-	NULL,
+	&malloc,        // 15
+    &free,          // 16
+    &realloc,       // 17
 };
 
 // Syscall wrapper for doing syscall in user space

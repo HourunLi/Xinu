@@ -106,6 +106,12 @@ pid32	create(
     prptr->prstkbase_user = (char *)(VM_USER_STACK_BASE - B(4));
     prptr->prstklen = KB(4);        /*kernel stack size is always 4KB*/
 	prptr->prstklen_user = ssize;   /*USER stack size is round to 4KB*n */
+    prptr->heapSize = 0;
+    for(int i = 0; i < LISTMAX; i++) {
+        prptr->seg_free_lists[i] = NULL;
+    }
+    prptr->heap_listp = NULL;
+    prptr->heapIsInitialized = FALSE;
 	prptr->prname[PNMLEN-1] = NULLCH;
 	for (i=0 ; i<PNMLEN-1 && (prptr->prname[i]=name[i])!=NULLCH; i++)
 		;

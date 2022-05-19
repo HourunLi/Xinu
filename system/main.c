@@ -2,21 +2,12 @@
 
 #include <xinu.h>
 
-void sort(int32 *array, uint32 n) {
-	for (uint32 i = 0; i < n; i++)
-		for (uint32 j = i + 1; j < n; j++)
-			if (array[i] > array[j]) {
-				int32 tmp = array[i];
-				array[i] = array[j];
-				array[j] = tmp;
-			}
-}
-
 process	main(void)
 {
-
+    char s = 'a';
+    char *ptr = &s;
+    *ptr = 'b';
 	// /* Run the Xinu shell */
-
 	syscall_recvclr();
 	syscall_resume(syscall_create(shell, 8192, 50, "shell", 1, CONSOLE));
 

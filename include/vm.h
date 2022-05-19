@@ -15,6 +15,8 @@
 #define VM_USER_STACK_BASE                  0XFE000000
 #define VM_KERNEL_STACK_BASE                PHY_PAGE_RECORD_ADDR
 #define VM_HEAP_BASE                        MB(12)
+#define VM_MAX_HEAP_SIZE                    MB(20)
+#define VM_MAX_HEAP_ADDR                    (VM_HEAP_BASE + VM_MAX_HEAP_SIZE)
 #define VM_TMP_ADDR                         PHY_PAGE_RECORD_ADDR
 
 #define VM_PAGE_RECORD_ADDR                 MB(4)

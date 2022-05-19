@@ -22,5 +22,8 @@
 #define SYSCALL_CONTROL		12
 #define SYSCALL_KILL		13
 #define SYSCALL_GETPID		14
+#define SYSCALL_MALLOC      15
+#define SYSCALL_FREE        16
+#define SYSCALL_REALLOC     17
 
 int sys_uprintf();

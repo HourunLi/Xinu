@@ -58,7 +58,8 @@ syscall	kill(
 	for (i=0; i<3; i++) {
 		close(prptr->prdesc[i]);
 	}
-
+    // free the heap space
+    mem_free();
     /*
      * put the page needed to be free on the 0x0  
      * In order to get an virtual addr to access in a new pgdir

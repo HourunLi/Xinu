@@ -5,25 +5,9 @@
  */
 #include <xinu.h>
 
-/* private variables */
-static char *mem_start_brk;  /* points to first byte of heap */
-static char *mem_brk;        /* points to last byte of heap */
-static char *mem_max_addr;   /* largest legal heap address */ 
-
-#define MAX_HEAP MB(20)  
-/* 
- * mem_init - initialize the memory system model
- */
-void mem_init() {
-    mem_start_brk = VM_HEAP_BASE;
-    mem_max_addr = mem_start_brk + MAX_HEAP;  /* max legal heap address */
-    mem_brk = mem_start_brk;                  /* heap is empty initially */
-}
-
 void mem_free() {
     struct procent *prptr = &proctab[currpid];
-    freeVirtualAddr(prptr->pageDirectory, mem_start_brk, mem_brk-mem_start_brk);
-    mem_start_brk = mem_brk = 0;
+    freeVirtualAddr(prptr->pageDirectory, VM_HEAP_BASE, prptr->heapSize);
     prptr->heapSize = 0;
     return;
 }
@@ -33,21 +17,20 @@ void mem_free() {
  *    this model, the heap cannot be shrunk.
  */
 void *mem_sbrk(int32 delta)  {
-    void *old_brk = mem_brk;
-    struct procent *prptr = &proctab[currpid];
-
     if (delta < 0) {
         kprintf("ERROR: heap size cannot be shunk\n");
         return (void *)-1;
     }
 
+    struct procent *prptr = &proctab[currpid];
+    void *old_brk = VM_HEAP_BASE + prptr->heapSize;
+
     uint32 newHeapSize = prptr->heapSize + delta;
-    if(newHeapSize > MAX_HEAP) {
+    if(newHeapSize > VM_MAX_HEAP_SIZE) {
         kprintf("ERROR: mem_sbrk failed. Ran out of memory...\n");
         return (void *)-1;
     }
 
-    mem_brk += delta;
     allocateVirtualAddr(prptr->pageDirectory, old_brk, delta, 1);
     
     prptr->heapSize = newHeapSize;
@@ -60,7 +43,7 @@ void *mem_sbrk(int32 delta)  {
  */
 void *mem_heap_lo()
 {
-    return (void *)mem_start_brk;
+    return (void *)VM_HEAP_BASE;
 }
 
 /* 
@@ -68,14 +51,14 @@ void *mem_heap_lo()
  */
 void *mem_heap_hi()
 {
-    return (void *)(mem_brk - 1);
+    return (void *)(VM_HEAP_BASE + mem_heapsize() - 1);
 }
 
 /*
  * mem_heapsize() - returns the heap size in bytes
  */
 uint32 mem_heapsize()  {
-    return (uint32)(mem_brk - mem_start_brk);
+    return proctab[currpid].heapSize;
 }
 
 /*

@@ -11,80 +11,6 @@
  * comment that gives a high level description of your solution.
  */
 #include <xinu.h>
-// #include "malloc.h"
-// #include "memlib.h"
-
-// #define DEBUG 1
-/* If you want debugging output, use the following macro.  When you hand
- * in, remove the #define DEBUG line. */
-#ifdef DEBUG
-# define DBG_PRINTF(...) printf(__VA_ARGS__)
-# define CHECKHEAP(verbose) mm_checkheap(verbose)
-#else
-# define DBG_PRINTF(...)
-# define CHECKHEAP(verbose)
-#endif
-
-
-/* single word (4) or double word (8) alignment */
-#define ALIGNMENT 8
-
-/* rounds up to the nearest multiple of ALIGNMENT */
-
-#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
-
-#define LISTMAX 16
-
-/* Basic constants and macros */
-#define WSIZE 4 /* Word and header/footer size (bytes) */
-#define DSIZE 8 /* Double word size (bytes) */
-#define CHUNKSIZE (1<<12) /* Extend heap by this amount (bytes) */
-#define INITCHUNKSIZE (1<<6)
-
-#define MAX(x, y) ((x) > (y)? (x) : (y))
-#define MIN(x, y) ((x) < (y)? (x) : (y))
-/* Pack a size and allocated bit into a word */
-#define PACK(size, alloc) ((size) | (alloc))
-
-/* Read and write a word at address p */
-#define GET(p) (*(unsigned int *)(p))
-#define PUT(p, val) (*(unsigned int *)(p) = (val))
-
-/* Read the size and allocated fields from address p */
-#define GET_SIZE(p) (GET(p) & ~0x7)
-#define GET_ALLOC(p) (GET(p) & 0x1)
-
-/* Given block ptr bp, compute address of its header and footer */
-#define HDRP(bp) ((char *)(bp) - WSIZE)
-#define FTRP(bp) ((char *)(bp) + GET_SIZE(HDRP(bp)) - DSIZE)
-
-/* Given block ptr bp, compute address of next and previous blocks */
-#define NEXT_BLKP(bp) ((char *)(bp) + GET_SIZE(((char *)(bp) - WSIZE)))
-#define PREV_BLKP(bp) ((char *)(bp) - GET_SIZE(((char *)(bp) - DSIZE)))
-
-/* for explict linkedlist */
-#define PRED_PTR(ptr) ((char *)(ptr))
-#define SUCC_PTR(ptr) ((char *)(ptr) + DSIZE)
-
-/* get the ptr*/
-#define PRED(ptr) (*(char **)(ptr))
-#define SUCC(ptr) (*(char **)(SUCC_PTR(ptr)))
-
-/* set the ptr */
-#define SET_PTR(p, ptr) (*(char **)(p) = (char *)ptr)
-
-static void *extend_heap(uint32 words);
-static void *place(void *bp, uint32 asize);
-static void *coalesce(void *bp);
-static void insert_node(void *bp, uint32 size);
-static void delete_node(void *bp);
-static uint32 get_asize(uint32 size);
-static void *realloc_coalesce(void *bp,uint32 newSize,int *isNextFree);
-static void realloc_place(void *bp,uint32 asize);
-void checkheap(int verbose);
-void mm_checkheap(int verbose);
-void *seg_free_lists[LISTMAX];
-char *heap_listp;
 
 static void *extend_heap(uint32 words) {
     char *bp;
@@ -109,19 +35,21 @@ static void *extend_heap(uint32 words) {
  */
 int mm_init(void) {
 //    printf("The ptr size of current machine platform is %d\n", sizeof(char *));
+    struct procent *prptr = &proctab[currpid];
+    prptr->heapIsInitialized = TRUE;
     int i;
-    /* initiliaze seg_free_lists */
+    /* initiliaze prptr->seg_free_lists */
     for (i = 0; i < LISTMAX; i++) {
-        seg_free_lists[i] = NULL;
+        prptr->seg_free_lists[i] = NULL;
     }
     /* Create the initial empty heap */
-    if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
+    if ((prptr->heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1)
         return -1;
-    PUT(heap_listp, 0); /* Alignment padding */
-    PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */
-    PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */
-    PUT(heap_listp + (3*WSIZE), PACK(0, 1)); /* Epilogue header */
-    heap_listp += (2*WSIZE);
+    PUT(prptr->heap_listp, 0); /* Alignment padding */
+    PUT(prptr->heap_listp + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */
+    PUT(prptr->heap_listp + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */
+    PUT(prptr->heap_listp + (3*WSIZE), PACK(0, 1)); /* Epilogue header */
+    prptr->heap_listp += (2*WSIZE);
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(INITCHUNKSIZE/WSIZE) == NULL)
@@ -157,13 +85,14 @@ static void *place(void *bp, uint32 asize) {
 // inset a free block into free list
 static void insert_node(void *bp, uint32 size)
 {
+    struct procent *prptr = &proctab[currpid];
     int tar = 0;
     uint32 j;
     for (j = size; (j > 1) && (tar < LISTMAX - 1); ) {
         j >>= 1;
         tar++;
     }
-    char *i = seg_free_lists[tar];
+    char *i = prptr->seg_free_lists[tar];
     char *pre = NULL;
     while ((i != NULL) && (size > GET_SIZE(HDRP(i)))) {
         pre = i;
@@ -171,7 +100,7 @@ static void insert_node(void *bp, uint32 size)
     }// i should be first node size >= input size
     // empty list and establish a new list
     if (i == NULL && pre == NULL) {
-        seg_free_lists[tar] = bp;
+        prptr->seg_free_lists[tar] = bp;
         SET_PTR(PRED_PTR(bp), NULL);
         SET_PTR(SUCC_PTR(bp), NULL); 
     } else if (i == NULL && pre != NULL) { // add at the last
@@ -179,7 +108,7 @@ static void insert_node(void *bp, uint32 size)
         SET_PTR(SUCC_PTR(bp), NULL);
         SET_PTR(SUCC_PTR(pre), bp);   
     } else if (pre == NULL) { // add at the first
-        seg_free_lists[tar] = bp;
+        prptr->seg_free_lists[tar] = bp;
         SET_PTR(PRED_PTR(i), bp);
         SET_PTR(SUCC_PTR(bp), i);
         SET_PTR(PRED_PTR(bp), NULL);
@@ -193,6 +122,7 @@ static void insert_node(void *bp, uint32 size)
 
 static void delete_node(void *bp)
 {
+    struct procent *prptr = &proctab[currpid];
     uint32 size = GET_SIZE(HDRP(bp)), j;
     int tar = 0;
     for (j = size; (j > 1) && (tar < LISTMAX - 1); j >>= 1) {
@@ -200,7 +130,7 @@ static void delete_node(void *bp)
     }
     // the object is the first one
     if (PRED(bp) == NULL) { 
-        seg_free_lists[tar] = SUCC(bp);
+        prptr->seg_free_lists[tar] = SUCC(bp);
         if (SUCC(bp) != NULL)
             SET_PTR(PRED_PTR(SUCC(bp)), NULL);
     } else if (SUCC(bp) == NULL) {
@@ -217,8 +147,11 @@ static void delete_node(void *bp)
  * malloc - Allocate a block by incrementing the brk pointer.
  *     Always allocate a block whose size is a multiple of the alignment.
  */
-void *malloc(uint32 size)
+syscall *malloc(uint32 size)
 {
+    struct procent *prptr = &proctab[currpid];
+    if(prptr->heapIsInitialized == FALSE) 
+        mm_init();
     uint32 asize, search; /* Adjusted block size */
     uint32 extendsize; /* Amount to extend heap if no fit */
     char *bp = NULL;
@@ -233,8 +166,8 @@ void *malloc(uint32 size)
     int target;
     for (target = 0; target < LISTMAX; target++, search >>= 1) {
         /* find target seg_free_list*/
-        if ((search > 1) || (seg_free_lists[target] == NULL)) continue;
-        char *i = seg_free_lists[target];
+        if ((search > 1) || (prptr->seg_free_lists[target] == NULL)) continue;
+        char *i = prptr->seg_free_lists[target];
         for(;i != NULL;i = SUCC(i))
         {
             if (GET_SIZE(HDRP(i)) < asize) continue;
@@ -290,7 +223,9 @@ static void *coalesce(void *bp)
 /*
  * free - Freeing a block does nothing.
  */
-void free(void *bp) {
+syscall free(void *bp) {
+    if(proctab[currpid].heapIsInitialized == FALSE) 
+        mm_init();
     uint32 size = GET_SIZE(HDRP(bp));
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
@@ -301,7 +236,9 @@ void free(void *bp) {
 /*
  * realloc - Implemented simply in terms of malloc and free
  */
-void *realloc(void *ptr, uint32 size) {
+syscall *realloc(void *ptr, uint32 size) {
+    if(proctab[currpid].heapIsInitialized == FALSE) 
+        mm_init();
     if (ptr == NULL)
        return malloc(size);
     if (size == 0) {
@@ -464,18 +401,19 @@ void mm_checkheap(int verbose)  {
 }
 //heap level
 void checkheap(int verbose) {
-    char *bp = heap_listp;
-
+    struct procent *prptr = &proctab[currpid];
+    char *bp = prptr->heap_listp;
+    
     if (verbose)
-        printf("Heap (%p):\n", heap_listp);
+        printf("Heap (%p):\n", prptr->heap_listp);
     // check head
-    if ((GET_SIZE(HDRP(heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(heap_listp)))
+    if ((GET_SIZE(HDRP(prptr->heap_listp)) != DSIZE) || !GET_ALLOC(HDRP(prptr->heap_listp)))
         printf("Bad prologue header\n");
     // block level
-    checkblock(heap_listp);
+    checkblock(prptr->heap_listp);
     int pre_free = 0;
     
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+    for (bp = prptr->heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
         if (verbose) 
             printblock(bp);
         int cur_free = checkblock(bp);
@@ -489,8 +427,8 @@ void checkheap(int verbose) {
     int i = 0, tarsize = 1;
     for (; i < LISTMAX; i++) {
         if (verbose) 
-            printlist(seg_free_lists[i], tarsize);
-        checklist(seg_free_lists[i],tarsize);
+            printlist(prptr->seg_free_lists[i], tarsize);
+        checklist(prptr->seg_free_lists[i],tarsize);
         tarsize <<= 1;
     }
     // check the tail
