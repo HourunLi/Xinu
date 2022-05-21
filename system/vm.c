@@ -18,7 +18,7 @@ void* allocatePhysicalPage() {
         return NULL;
     }
     void *physicalPage = *(uint32 *)((uint32)freePages + (--freePageCount)*4);
-    // kpritnf("Allocate physical page %8x\n", physicalPage);
+    DBG_PRINTF("Allocate physical page %8x\n", physicalPage);
     return physicalPage;
 }
 
@@ -28,14 +28,14 @@ void freePhysicalPage(uint32 physicalAddr) {
             kprintf("freePhysicalPage: double free or corruption (%8x)\n", physicalAddr);
             return;
         }
-    kprintf("free physical page %8x\n", physicalAddr);
+    DBG_PRINTF("free physical page %8x\n", physicalAddr);
     *(uint32 *)((uint32)freePages + (freePageCount++)*4) = physicalAddr;
     return;
 }
 
 /* Only for heap allocate */
 void allocateVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32 size, uint8 userSupervisor) {
-    kprintf("allocateVirtualAddr: Alloc virtual addr %8x with %x bytes\n", virtualAddr, size);
+    // kprintf("allocateVirtualAddr: Alloc virtual addr %8x with %x bytes\n", virtualAddr, size);
     uint32 endVirtualAddr = virtualAddr+size;
 
     for(uint32 addr = virtualAddr; addr < endVirtualAddr; addr += KB(4)) {
@@ -44,7 +44,7 @@ void allocateVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32
 }
 
 void *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8 userSupervisor) {
-    kprintf("allocateVirtualPage: Alloc virtual addr %8x\n", virtualAddr);
+    // kprintf("allocateVirtualPage: Alloc virtual addr %8x\n", virtualAddr);
     uint32 pgdirEntryID = getPageDirectoryEntryID(virtualAddr);
     uint32 pgEntryID = getPageEntryID(virtualAddr);
     uint32 pgOffset  = getPageOffset(virtualAddr);
@@ -82,12 +82,16 @@ void *allocateVirtualPage(PageDirectory pageDirectory, uint32 virtualAddr, uint8
 
 /* Only for heap free */
 void freeVirtualAddr(PageDirectory pageDirectory, uint32 virtualAddr, uint32 size) {
-    kprintf("freeVirtualAddr: free virtual addr %8x with %x bytes\n", virtualAddr, size);
+    // kprintf("freeVirtualAddr: free virtual addr %8x with %x bytes\n", virtualAddr, size);
     uint32 endVirtualAddr = virtualAddr+size;
     for(uint32 addr = roundpage(virtualAddr); addr < endVirtualAddr; addr += KB(4)) {
         memset(addr, 0, KB(4));
         freeVirtualPage(pageDirectory, addr);
         invlpg(addr);
+    }
+
+    for(uint32 addr = roundpage(virtualAddr); addr < endVirtualAddr; addr += MB(4)) {
+        freeVirtualPage(pageDirectory, MB(8) + getPageDirectoryEntryID(addr)* VM_PAGE_SIZE);
     }
     return;
 }

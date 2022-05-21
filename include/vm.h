@@ -1,6 +1,13 @@
 #pragma once
 #include <kernel.h>
 
+#define VM_DEBUG                            1
+#ifdef VM_DEBUG
+# define DBG_PRINTF(...) kprintf(__VA_ARGS__)
+#else
+# define DBG_PRINTF(...)
+#endif
+
 #define VM_PAGE_SIZE                        KB(4)
 #define PAGE_OFFSET_BIT                     12
 #define PAGE_DIRECTORY_BIT                  10

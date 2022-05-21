@@ -6,6 +6,9 @@
 #include <xinu.h>
 
 void mem_free() {
+    /* free heap memory*/
+    DBG_PRINTF("\n*******************start free child process's memory resource*******************\n");
+    DBG_PRINTF("\n*******************free heap memory*******************\n");
     struct procent *prptr = &proctab[currpid];
     freeVirtualAddr(prptr->pageDirectory, VM_HEAP_BASE, prptr->heapSize);
     prptr->heapSize = 0;

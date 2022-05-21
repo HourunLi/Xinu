@@ -16,7 +16,7 @@ void sort(int32 *array, uint32 n) {
  *------------------------------------------------------------------------
  */
 shellcmd xsh_sort(int nargs, char *args[]) {
-    syscall_printf("hello from sort!!");
+    // syscall_printf("hello from sort!!");
 	int32 *array = syscall_malloc(0);
 	uint32 n = 0;
 	
@@ -31,6 +31,6 @@ shellcmd xsh_sort(int nargs, char *args[]) {
 		for (uint32 j = 0; j < n; j++)
 			syscall_printf("%d%c", array[j], " \n"[j == n - 1]);
 	}
-
+    syscall_free(array);
 	return 0;
 }

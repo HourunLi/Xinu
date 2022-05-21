@@ -46,6 +46,7 @@ struct procent {	/* Entry in the process table		                */
 	uint16	        prstate;	    /* Process state: PR_CURR, etc.		*/
 	pri16	        prprio;		    /* Process priority			        */
 	char	        *prstkptr;	    /* Saved stack pointer		    	*/
+    char            *prstkptr_;     /* The kernel stack pointer value when shifting from user mode */
     char	        *prstkptr_user;	/* Saved user stack pointer			*/
 	char	        *prstkbase;	    /* Base of run time stack		    */
     char	        *prstkbase_user;/* Base of user run time stack		*/
@@ -61,7 +62,7 @@ struct procent {	/* Entry in the process table		                */
     uint32          heapSize;       /* heap size                        */
     void            *seg_free_lists[LISTMAX]; /* for heap list          */
     char            *heap_listp;    /* heap block begining pointer      */
-    uint8            heapIsInitialized; /* flag: heap is initialized     */
+    uint8            heapIsInitialized; /* flag: heap is initialized    */
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

@@ -136,13 +136,14 @@ static	void	sysinit()
 	initevec();
 	
 	/* Initialize free memory pages*/
-
 	meminit();
 
-    /* Initialize virtual memory */
+    /* Initialize kernel page table and directory */
     PageDirectory kernelPageDirectory = initialKernelPageTable();
 
+    /* enable paging */
     enablePaging(kernelPageDirectory);
+    
 	/* Initialize system variables */
 
 	/* Count the Null process as the first process in the system */

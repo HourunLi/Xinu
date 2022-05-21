@@ -11,23 +11,28 @@
 
 void freeLastProcessMemmoryResource() {
     /* free kernel stack */
+    DBG_PRINTF("*******************free kernel stack*******************\n");
     PageTableEntry *pgEntryPtr = (PageTableEntry *)(KB(4) + getPageEntryID(VM_KERNEL_STACK_BASE-KB(4)) * PAGE_ENTRY_SIZE);
     freePhysicalPage(((pgEntryPtr->pageBaseAddress) << PAGE_OFFSET_BIT));
     /* free user stack */
-    for(pgEntryPtr = KB(8); pgEntryPtr < KB(12); pgEntryPtr += PAGE_ENTRY_SIZE) {
-        if(!pgEntryPtr->present)
+    DBG_PRINTF("*******************free user stack*******************\n");
+    for(pgEntryPtr = KB(8); pgEntryPtr < KB(12); pgEntryPtr += 1) {
+        if(!(pgEntryPtr->present))
             continue;
         freePhysicalPage((pgEntryPtr->pageBaseAddress) << PAGE_OFFSET_BIT);
     }
     /*free page table */
+    DBG_PRINTF("*******************free page table*******************\n");
     PageDirectoryEntry *pgdirEntryPtr = 0 * PAGE_ENTRY_SIZE;
     freePhysicalPage((pgdirEntryPtr->pageTableBaseAddress) << PAGE_OFFSET_BIT);
     pgdirEntryPtr = getPageDirectoryEntryID(VM_USER_STACK_BASE-KB(4)) * PAGE_ENTRY_SIZE;
     freePhysicalPage((pgdirEntryPtr->pageTableBaseAddress) << PAGE_OFFSET_BIT);
     /* free page directory itself*/
+    DBG_PRINTF("*******************free page diretory*******************\n");
     pgdirEntryPtr = 2 * PAGE_ENTRY_SIZE;
     freePhysicalPage((pgdirEntryPtr->pageTableBaseAddress) << PAGE_OFFSET_BIT);
     memset(0, 0, KB(12));
+    DBG_PRINTF("\n*******************finish free child process's memory resource*******************\n");
     return;
 }
 
@@ -70,7 +75,7 @@ syscall	kill(
     /* Copy the 0th page table, for kernel stack */
     memcpy(KB(4), MB(8), VM_PAGE_SIZE);
     /* Copy the xth page table, for user stack */
-    memcpy(KB(8), MB(8) + KB(4) * getPageDirectoryEntryID(VM_USER_STACK_BASE - MB(4)), VM_PAGE_SIZE);
+    memcpy(KB(8), MB(8) + VM_PAGE_SIZE * getPageDirectoryEntryID(VM_USER_STACK_BASE - KB(4)), VM_PAGE_SIZE);
 
 	switch (prptr->prstate) {
 	case PR_CURR:

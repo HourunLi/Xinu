@@ -224,13 +224,6 @@ gdt1:
     ltr     %ax
     popl    %eax
 
-    /*
-    movl    kpgdir, %eax
-    movl    %eax, %cr3
-    movl    %cr0, %eax
-    orl     $(CR0_PG | CR0_WP), %eax
-    movl    %eax, %cr0
-	*/
     call	nulluser
 	call	halt
 

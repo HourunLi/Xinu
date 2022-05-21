@@ -141,14 +141,14 @@ void	meminit(void) {
 		mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
 	}
 
-    kprintf("freePageCount is %d\n", freePageCount);
-    uint8 t = 0;
-    for(int cnt = 0; cnt < freePageCount; cnt++) {
-        t = (++t) % 10; 
-        if(!t)
-            kprintf("\n");
-        kprintf("%8x\t", *(uint32 *)((uint32)freePages + 4*cnt));
-    }
+    // kprintf("freePageCount is %d\n", freePageCount);
+    // uint8 t = 0;
+    // for(int cnt = 0; cnt < freePageCount; cnt++) {
+    //     t = (++t) % 10; 
+    //     if(!t)
+    //         kprintf("\n");
+    //     kprintf("%8x\t", *(uint32 *)((uint32)freePages + 4*cnt));
+    // }
 }
 
 // static inline void ltr(uint16 sel) {

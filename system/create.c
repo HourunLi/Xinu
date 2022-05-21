@@ -94,7 +94,7 @@ pid32	create(
 		return SYSERR;
 	}
 
-    kprintf("%s\n", name);
+    // kprintf("%s\n", name);
     // kprintf("%x, %x", saddr, saddr_user);
 	prcount++;
 	prptr = &proctab[pid];
@@ -152,7 +152,7 @@ pid32	create(
 
     /* Initialize user stack(size is ssize) */
     Page user_stack_vir = VM_TMP_ADDR + 4 * VM_PAGE_SIZE; // end + 24KB
-    for(uint32 addr = VM_USER_STACK_BASE - ssize; addr < VM_USER_STACK_BASE; addr += KB(4)) {
+    for(uint32 addr = VM_USER_STACK_BASE - ssize; addr < VM_USER_STACK_BASE; addr += VM_PAGE_SIZE) {
         clearPageTableEntry(MB(8), getPageEntryID(user_stack_vir));
         void *user_stack_phy = allocateVirtualPage(VM_PAGE_DIRECTORY_ADDR, user_stack_vir, 1);
         initializeTablex(tablex_vir, addr, user_stack_phy);
@@ -185,7 +185,7 @@ pid32	create(
 		
 	*--saddr = (long)INITRET;	/* Push on return address	*/
     *--saddr_user = (long)INITRET;  
- 
+    prptr->prstkptr_ = (uint32)kernelStackAdptor_tmp2normal(saddr);
     // ESP = (uint32)saddr_user;
     ESP = (uint32)userStackAdaptor_tmp2normal(saddr_user);
     *--saddr = SS;

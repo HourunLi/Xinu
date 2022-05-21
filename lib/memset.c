@@ -13,7 +13,7 @@ void	*memset(
 {
     register int i;
     char *cp = (char *)s;
-    kprintf("memset %8x to %8x with %d\n", (uint32)s, (uint32)s + n, c);
+    // kprintf("memset %8x to %8x with %d\n", (uint32)s, (uint32)s + n, c);
     for (i = 0; i < n; i++)
     {
         *cp = (unsigned char)c;
