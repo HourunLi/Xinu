@@ -52,7 +52,7 @@ struct sd gdt_copy[NGD] = {
 {       0xffff,          0,           0,      0xf2,         0xc0,        0, },
 /* 6rd, user Stack Segment */
 {       0xffff,          0,           0,      0xf2,         0xc0,        0, },
-/* 7th entry NULL */
+/* 7th tss entry */
 {            0,          0,           0,      0x89,            0,        0, },
 };
 

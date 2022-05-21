@@ -39,7 +39,7 @@ pid32	create(
 		restore(mask);
 		return SYSERR;
 	}
-    kprintf("%s\n", name);
+    // kprintf("%s\n", name);
     // kprintf("%x, %x", saddr, saddr_user);
 	prcount++;
 	prptr = &proctab[pid];
@@ -79,6 +79,7 @@ pid32	create(
 		
 	*--saddr = (long)INITRET;	/* Push on return address	*/
     *--saddr_user = (long)INITRET;  
+    prptr->prstkptr_ = saddr;
     // if(strncmp(name, "Main process", 12) == 0) {
         // tss->ss0 = (0x3 << 3);
         // tss->esp0 = (long) saddr;
