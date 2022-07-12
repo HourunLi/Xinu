@@ -48,7 +48,7 @@ void kbdhandler(void) {
         // Get key
         char ch = kbdGetChar();
         if (ch == -1 || ch == 0 || semcount(kbdcb.tyisem) >= KBD_BUFFER_SIZE) break;
-
+        vgaputc(NULL, ch); 
         // Append to buffer
         kbdcb.tyibuff[kbdcb.tyitail++] = ch;
         kbdcb.tyitail %= KBD_BUFFER_SIZE;

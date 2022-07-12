@@ -18,13 +18,6 @@
 /* Type Declarations for both real- and pseudo- device types */
 
 /* type of a null device */
-kbdvga: 
-    on kbdvga
-		-i kbdvgainit 	-o ionull 	-c ionull
-		-r kbdread 	    -g kbdgetc 	-p vgaputc
-		-w vgawrite     -s ioerr 	-n ionull
-		-intr kbddisp
-
 null:
 	on nothing
 		-i ionull	-o ionull	-c ionull
@@ -70,13 +63,20 @@ nam:
 		-r ioerr 	-g ioerr 	-p ioerr
 		-w ioerr 	-s ioerr 	-n ioerr
 		-intr ioerr
+
+kbdvga: 
+    on kbdvga
+		-i kbdvgainit 	-o ionull 	-c ionull
+		-r kbdread 	    -g kbdgetc 	-p vgaputc
+		-w vgawrite     -s ioerr 	-n ionull
+		-intr kbddisp
 %%
 
 /* Actual device declarations that each give the name of a device that	*/
 /*   will be present in the system					*/
 
-   /* Define the console device to be a tty and specify CSR*/
-   CONSOLE is tty  on uart  csr 0001770 -irq 0044
+   /* Define the console device to be a tty and specify CSR */
+   CONSOLE is tty  on uart  csr 0001770 -irq 0044 
 
    /* Define a null device */
    NULLDEV is null on nothing
@@ -101,8 +101,9 @@ nam:
    LFILE5 is lfl on lfs
 
    /* Define a keyboard and vga device(combination of both) */
-   
    KBDVGA is kbdvga on kbdvga csr 0001724 -irq 0041
+
+   
 %%
 
 /* Configuration and Size Constants */

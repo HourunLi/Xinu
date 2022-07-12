@@ -125,6 +125,11 @@ struct kbdcblk kbdcb;
 #define SCREEN_WIDTH  80
 #define SCREEN_HEIGHT 25
 #define BLACK_WHITE   0X07
+#define TY_RETURN     '\n'
+#define TY_TAB        '\t'
+#define TY_BACKSP     '\b'
+#define TY_UPARROW    '^'
+#define TY_BLANK      ' '
 #define PACK(high, low)  ((high << 8) | low) 
 #define TEXT_MODE_BUFFER ((uint16 *)0xB8000)
 

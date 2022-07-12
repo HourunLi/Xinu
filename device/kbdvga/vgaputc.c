@@ -5,7 +5,7 @@ void scrollUpScreen() {
     // Move everything in the buffer except the last line
     memmove(
         TEXT_MODE_BUFFER,                // destination: buffer address from 0-th line
-        TEXT_MODE_BUFFER + SCREEN_WIDTH, // source: buffer address from 1-st line
+        TEXT_MODE_BUFFER + SCREEN_WIDTH, // source: buffer address from 1th line
         (int32)SCREEN_WIDTH * (SCREEN_HEIGHT - 1) * sizeof(uint16)
     );
 
@@ -13,7 +13,7 @@ void scrollUpScreen() {
     memset16(
         TEXT_MODE_BUFFER + (int32)SCREEN_WIDTH * (SCREEN_HEIGHT - 1),
         SCREEN_WIDTH,
-        PACK(BLACK_WHITE, ' ')
+        PACK(BLACK_WHITE, TY_BLANK)
     );
 }
 
@@ -38,23 +38,27 @@ void backspace() {
         // Move to previous line
         setCursorPosition(cursor.row - 1, SCREEN_WIDTH - 1);
     uint16 index = getCursorPosition(cursor.row, cursor.column);
-    TEXT_MODE_BUFFER[index] = PACK(BLACK_WHITE, ' ');
+    TEXT_MODE_BUFFER[index] = PACK(BLACK_WHITE, TY_BLANK);
 }
 
 devcall vgaputc(struct dentry *devptr, char ch) {
-    // kprintf("vgaputc: char = [%d] %c\n", (int)ch, ch);
     switch(ch) {
-    case '\n':
+    case TY_RETURN:
         newLine();
         break;
-    case '\t':
+    case TY_TAB:
         for (int32 i = 0; i < 8 - (cursor.column % 8); i++)
-            vgaputc(devptr, ' ');
+            vgaputc(devptr, TY_BLANK);
         break;
-    case '\b':
+    case TY_BACKSP:
         backspace();
         break;
     default:
+        if(ch < TY_BLANK || ch == 0x7f) {
+            vgaputc(devptr, TY_UPARROW);
+            vgaputc(devptr, ch+0100);
+            return;
+        }
         TEXT_MODE_BUFFER[getCursorPosition(cursor.row, cursor.column)] = PACK(BLACK_WHITE, ch);
         if (cursor.column == SCREEN_WIDTH - 1)
             newLine();

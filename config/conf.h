@@ -42,13 +42,13 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 
 /* Control block sizes */
 
-#define	Nkbdvga	1
 #define	Nnull	1
 #define	Ntty	1
 #define	Nram	1
 #define	Nlfs	1
 #define	Nlfl	6
 #define	Nnam	1
+#define	Nkbdvga	1
 
 #define NDEVS 12
 
