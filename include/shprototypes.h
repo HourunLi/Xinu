@@ -75,3 +75,6 @@ extern	shellcmd  xsh_help	(int32, char *[]);
 
 /* in file xsh_sort.c */
 extern shellcmd xsh_sort    (int32 nargs, char *args[]);
+
+/* in file xsh_kbdtest.c */
+extern	shellcmd  xsh_kbdvgatest	(int32, char *[]);

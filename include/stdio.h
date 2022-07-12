@@ -35,8 +35,12 @@ extern	int32	sprintf(char *, char *, ...);
 /* Prototypes for character input and output functions */
 
 extern	int32	fgetc(int);
+#define syscall_fgetc(...) \
+		do_generic_syscall(int32, SYSCALL_FGETC, __VA_ARGS__)
 extern	char	*fgets(char *, int32, int32);
 extern	int32	fputc(int32, int32);
+#define syscall_fputc(...) \
+		do_generic_syscall(int32, SYSCALL_FPUTC, __VA_ARGS__)
 extern	int32	fputs(char *, int32);
 extern	int32	putchar(int32 c);
 extern	int32	getchar(void);

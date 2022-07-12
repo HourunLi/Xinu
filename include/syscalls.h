@@ -25,5 +25,7 @@
 #define SYSCALL_MALLOC      15
 #define SYSCALL_FREE        16
 #define SYSCALL_REALLOC     17
+#define SYSCALL_FGETC       18
+#define SYSCALL_FPUTC       19
 
 int sys_uprintf();

@@ -94,5 +94,12 @@ struct	dentry	devtab[NDEVS] =
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
-	  (void *)0x0, (void *)ionull, 0 }
+	  (void *)0x0, (void *)ionull, 0 },
+
+/* KBDVGA is kbdvga */
+	{ 11, 0, "KBDVGA",
+	  (void *)kbdvgainit, (void *)ionull, (void *)ionull,
+	  (void *)kbdread, (void *)vgawrite, (void *)ioerr,
+	  (void *)kbdgetc, (void *)vgaputc, (void *)ionull,
+	  (void *)0x3d4, (void *)kbddisp, 33 }
 };

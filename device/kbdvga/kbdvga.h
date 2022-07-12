@@ -1,3 +1,4 @@
+#pragma once
 // PC keyboard interface constants
 
 #define KBSTATP         0x64    // kbd controller status port(I)
@@ -110,8 +111,32 @@ static uint8 ctlmap[256] =
   [0xD2] KEY_INS,   [0xD3] KEY_DEL
 };
 
+#define KBD_BUFFER_SIZE TY_IBUFLEN
+
+struct kbdcblk {
+    uint32 tyihead, tyitail;
+    char tyibuff[KBD_BUFFER_SIZE];
+    sid32 tyisem;
+    int32 tyicursor;
+};
+struct kbdcblk kbdcb;
+
+// vga.h
+#define SCREEN_WIDTH  80
+#define SCREEN_HEIGHT 25
+#define BLACK_WHITE   0X07
+#define PACK(high, low)  ((high << 8) | low) 
+#define TEXT_MODE_BUFFER ((uint16 *)0xB8000)
+
+struct CursorPosition {
+    uint8 row, column;
+};
+struct CursorPosition cursor;
+
 extern devcall kbdgetc(struct dentry *devptr);
 extern devcall vgaputc(struct dentry *devptr, char ch);
-extern devcall kbdvgainit(void);
+extern devcall kbdvgainit(struct dentry *devptr);
 extern interrupt kbddisp(void);
 extern void kbdhandler(void);
+extern void memset16(void *dest, int32 count, uint16 value);
+extern uint16 getCursorPosition(uint8 row, uint8 column);

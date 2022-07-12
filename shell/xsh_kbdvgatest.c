@@ -1,8 +1,7 @@
-/*  main.c  - main */
+/* xsh_kbdtest.c - xsh_kbdtest */
 #include <xinu.h>
 
-process	main(void)
-{
+shellcmd xsh_kbdvgatest(int nargs, char *args[]) {
 	while (1) {
 		char ch = syscall_fgetc(KBDVGA);
 		syscall_fputc(ch, KBDVGA);

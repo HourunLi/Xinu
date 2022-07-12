@@ -222,6 +222,24 @@ extern	devcall	lpread(struct dentry *, char *, int32);
 /* in file lpwrite.c */
 extern	devcall	lpwrite(struct dentry *, char *, int32);
 
+/* in file kbddisp.S */
+extern	interrupt	kbddisp(void);
+
+/* in file kbdvgainit.c */
+extern devcall kbdvgainit(struct dentry *devptr);
+
+/* in file kbdgetc.c */
+extern devcall	kbdgetc(struct dentry *devptr);
+
+/* in file kbdread.c */
+extern	devcall	kbdread(struct dentry *, char *, int32);
+
+/* in file vgaputc.c */
+extern	devcall	vgaputc(struct dentry *, char);
+
+/* in file vgawrite.c */
+extern	devcall	vgawrite(struct dentry *, char *, int32);
+
 /* in file mark.c */
 extern	void	markinit(void);
 extern	status	mark(int32 *);
