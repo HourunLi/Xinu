@@ -224,6 +224,7 @@ static void *coalesce(void *bp)
  * free - Freeing a block does nothing.
  */
 syscall free(void *bp) {
+    if(bp == NULL) return;
     if(proctab[currpid].heapIsInitialized == FALSE) 
         mm_init();
     uint32 size = GET_SIZE(HDRP(bp));
