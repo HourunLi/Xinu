@@ -32,15 +32,6 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define NAMESPACE            2	/* type nam      */
 #define RAM0                 3	/* type ram      */
 #define LFILESYS             4	/* type lfs      */
-<<<<<<< HEAD
-#define LFILE0               5	/* type lfl      */
-#define LFILE1               6	/* type lfl      */
-#define LFILE2               7	/* type lfl      */
-#define LFILE3               8	/* type lfl      */
-#define LFILE4               9	/* type lfl      */
-#define LFILE5              10	/* type lfl      */
-#define KBDVGA              11	/* type kbdvga   */
-=======
 #define DISK                 5	/* type disk     */
 #define LFILE0               6	/* type lfl      */
 #define LFILE1               7	/* type lfl      */
@@ -48,7 +39,7 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define LFILE3               9	/* type lfl      */
 #define LFILE4              10	/* type lfl      */
 #define LFILE5              11	/* type lfl      */
->>>>>>> Xinu-fs
+#define KBDVGA              12	/* type kbdvga   */
 
 /* Control block sizes */
 
@@ -58,13 +49,10 @@ extern	struct	dentry	devtab[]; /* one entry per device */
 #define	Nlfs	1
 #define	Nlfl	6
 #define	Nnam	1
-<<<<<<< HEAD
 #define	Nkbdvga	1
-=======
 #define	Ndisk	1
->>>>>>> Xinu-fs
 
-#define NDEVS 12
+#define NDEVS 13
 
 
 /* Configuration and Size Constants */
