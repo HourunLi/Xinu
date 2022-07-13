@@ -70,13 +70,19 @@ kbdvga:
 		-r kbdread 	    -g kbdgetc 	-p vgaputc
 		-w vgawrite     -s ioerr 	-n ionull
 		-intr kbddisp
+disk:
+	on top
+		-i ionull   -o ionull   -c ionull
+		-r diskread -g diskgetc -p ioerr
+		-w ioerr    -s diskseek -n ionull
+
 %%
 
 /* Actual device declarations that each give the name of a device that	*/
 /*   will be present in the system					*/
 
-   /* Define the console device to be a tty and specify CSR */
-   CONSOLE is tty  on uart  csr 0001770 -irq 0044 
+   /* Define the console device to be a tty and specify CSR*/
+   CONSOLE is tty  on uart  csr 0001770 -irq 0044
 
    /* Define a null device */
    NULLDEV is null on nothing
@@ -90,6 +96,8 @@ kbdvga:
    /* Define the local file system master device (one per system) */
 
    LFILESYS is lfs on ram
+
+   DISK is disk on top csr 0000760
 
    /* Define local file pseudo-devices (multiple per system) */
 

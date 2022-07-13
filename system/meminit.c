@@ -2,7 +2,6 @@
 
 #include <xinu.h>
 
-
 /* Memory bounds */
 
 void	*minheap;		/* Start of heap			*/

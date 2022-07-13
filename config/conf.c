@@ -54,42 +54,71 @@ struct	dentry	devtab[NDEVS] =
 	  (void *)ioerr, (void *)ioerr, (void *)ioerr,
 	  (void *)0x0, (void *)ionull, 0 },
 
+<<<<<<< HEAD
 /* LFILE0 is lfl */
 	{ 5, 0, "LFILE0",
+=======
+/* DISK is disk */
+	{ 5, 0, "DISK",
+	  (void *)ionull, (void *)ionull, (void *)ionull,
+	  (void *)diskread, (void *)ioerr, (void *)diskseek,
+	  (void *)diskgetc, (void *)ioerr, (void *)ionull,
+	  (void *)0x1f0, (void *)ioerr, 0 },
+
+/* LFILE0 is lfl */
+	{ 6, 0, "LFILE0",
+>>>>>>> Xinu-fs
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE1 is lfl */
+<<<<<<< HEAD
 	{ 6, 1, "LFILE1",
+=======
+	{ 7, 1, "LFILE1",
+>>>>>>> Xinu-fs
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE2 is lfl */
+<<<<<<< HEAD
 	{ 7, 2, "LFILE2",
+=======
+	{ 8, 2, "LFILE2",
+>>>>>>> Xinu-fs
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE3 is lfl */
+<<<<<<< HEAD
 	{ 8, 3, "LFILE3",
+=======
+	{ 9, 3, "LFILE3",
+>>>>>>> Xinu-fs
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE4 is lfl */
+<<<<<<< HEAD
 	{ 9, 4, "LFILE4",
+=======
+	{ 10, 4, "LFILE4",
+>>>>>>> Xinu-fs
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
 	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
 	  (void *)0x0, (void *)ionull, 0 },
 
 /* LFILE5 is lfl */
+<<<<<<< HEAD
 	{ 10, 5, "LFILE5",
 	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
 	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
@@ -102,4 +131,11 @@ struct	dentry	devtab[NDEVS] =
 	  (void *)kbdread, (void *)vgawrite, (void *)ioerr,
 	  (void *)kbdgetc, (void *)vgaputc, (void *)ionull,
 	  (void *)0x3d4, (void *)kbddisp, 33 }
+=======
+	{ 11, 5, "LFILE5",
+	  (void *)lflinit, (void *)ioerr, (void *)lflclose,
+	  (void *)lflread, (void *)lflwrite, (void *)lflseek,
+	  (void *)lflgetc, (void *)lflputc, (void *)lflcontrol,
+	  (void *)0x0, (void *)ionull, 0 }
+>>>>>>> Xinu-fs
 };

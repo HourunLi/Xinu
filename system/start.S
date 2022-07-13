@@ -106,6 +106,7 @@ start:
 	testb	$MULTIBOOT_BOOTINFO_MMAP, (%ebx)
 	je	halt
 
+	
 	/*
 	 * Iterate through the memory map segments to find the highest
 	 *   address that will fit the null stack
