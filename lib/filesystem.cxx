@@ -122,20 +122,20 @@ uint32 read_file(const char* filename, char *buffer, int bsize)
     info.pbr = *(PartitionBootRecord *)sector_buffer;
     info.feb = *(Fat16ExtBS *)((PartitionBootRecord *)sector_buffer + 1);
 
-    assert(info.pbr.bytes_per_sector == 512);
-    assert(info.feb.boot_signature == 0x28 || info.feb.boot_signature == 0x29);
-    assert(info.pbr.sectors_per_fat);
+    // assert(info.pbr.bytes_per_sector == 512);
+    // assert(info.feb.boot_signature == 0x28 || info.feb.boot_signature == 0x29);
+    // assert(info.pbr.sectors_per_fat);
 
     info.total_sectors = (info.pbr.total_sectors == 0) ? info.pbr.large_total_sectors : info.pbr.total_sectors;
     info.fat_size = info.pbr.sectors_per_fat;
-    assert(info.fat_size);
+    // assert(info.fat_size);
     info.root_dir_sectors = ((info.pbr.root_directory_entry_num * 32) + (info.pbr.bytes_per_sector - 1)) / info.pbr.bytes_per_sector;
     info.first_data_sector = info.pbr.hidden_sectors + (info.pbr.fat_num * info.fat_size) + info.root_dir_sectors;
     info.first_fat_sector = info.pbr.hidden_sectors;
     info.data_sectors = info.total_sectors - (info.pbr.hidden_sectors + (info.pbr.sectors_per_fat * info.fat_size) + info.root_dir_sectors);
     info.total_clusters = info.data_sectors / info.pbr.sectors_per_cluster;
 
-    assert(info.total_clusters >= 4085 && info.total_clusters < 65525);
+    // assert(info.total_clusters >= 4085 && info.total_clusters < 65525);
 
     // fat_file: info.first_fat_sector ~ info.first_fat_sector + info.fat_size
     // root: info.first_data_sector - info.root_dir_sectors ~ info.first_data_sector
