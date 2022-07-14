@@ -64,7 +64,6 @@ devcall	diskgetc(
         diskBuffer.sector++;
     }
     return ch;
-    return 0;
 }   
 
 devcall	diskseek (
@@ -72,8 +71,6 @@ devcall	diskseek (
 	  uint32	offset		    /* Byte position in the file	*/
 	)
 {
-    uint32 sector = offset / SECTOR_SIZE;
-    setSectorNum(sector);
     diskBuffer.cache = 0;
     diskBuffer.offset = offset % SECTOR_SIZE;
     diskBuffer.sector = offset / SECTOR_SIZE;
