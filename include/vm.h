@@ -1,7 +1,7 @@
 #pragma once
 #include <kernel.h>
 
-#define VM_DEBUG                            1
+// #define VM_DEBUG                         
 #ifdef VM_DEBUG
 # define DBG_PRINTF(...) kprintf(__VA_ARGS__)
 #else

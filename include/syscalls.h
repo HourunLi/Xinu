@@ -27,5 +27,6 @@
 #define SYSCALL_REALLOC     17
 #define SYSCALL_FGETC       18
 #define SYSCALL_FPUTC       19
-
-int sys_uprintf();
+#define SYSCALL_GETC        20
+#define SYSCALL_SEEK        21
+ 

@@ -1,5 +1,4 @@
 #include <xinu.h>
-
 #include <elf.h>
 
 struct __attribute__((packed)) PartitionTableEntry
@@ -102,8 +101,8 @@ uint32 read_file(const char* filename, char *buffer, int bsize)
     int part_start_lba = 0;
     MasterBootRecord mbr;
 
-    seek(DISK, 0);
-    read(DISK, (char *)&mbr, sizeof mbr);
+    syscall_seek(DISK, 0);
+    syscall_read(DISK, (char *)&mbr, sizeof mbr);
 
     for (int i = 0; i < 4; i++)
         if(mbr.parts[i].lba_start != 0)
@@ -116,15 +115,15 @@ uint32 read_file(const char* filename, char *buffer, int bsize)
     char sector_buffer[512];
     memset(&info, 0, sizeof info);
 
-    seek(DISK, 512 * part_start_lba);
-    read(DISK, sector_buffer, 512);
+    syscall_seek(DISK, 512 * part_start_lba);
+    syscall_read(DISK, sector_buffer, 512);
 
     info.pbr = *(PartitionBootRecord *)sector_buffer;
     info.feb = *(Fat16ExtBS *)((PartitionBootRecord *)sector_buffer + 1);
 
-    // assert(info.pbr.bytes_per_sector == 512);
-    // assert(info.feb.boot_signature == 0x28 || info.feb.boot_signature == 0x29);
-    // assert(info.pbr.sectors_per_fat);
+    assert(info.pbr.bytes_per_sector == 512);
+    assert(info.feb.boot_signature == 0x28 || info.feb.boot_signature == 0x29);
+    assert(info.pbr.sectors_per_fat);
 
     info.total_sectors = (info.pbr.total_sectors == 0) ? info.pbr.large_total_sectors : info.pbr.total_sectors;
     info.fat_size = info.pbr.sectors_per_fat;
@@ -135,7 +134,7 @@ uint32 read_file(const char* filename, char *buffer, int bsize)
     info.data_sectors = info.total_sectors - (info.pbr.hidden_sectors + (info.pbr.sectors_per_fat * info.fat_size) + info.root_dir_sectors);
     info.total_clusters = info.data_sectors / info.pbr.sectors_per_cluster;
 
-    // assert(info.total_clusters >= 4085 && info.total_clusters < 65525);
+    assert(info.total_clusters >= 4085 && info.total_clusters < 65525);
 
     // fat_file: info.first_fat_sector ~ info.first_fat_sector + info.fat_size
     // root: info.first_data_sector - info.root_dir_sectors ~ info.first_data_sector
@@ -143,11 +142,11 @@ uint32 read_file(const char* filename, char *buffer, int bsize)
     uint32 file_size = 0;
     uint32 start_cluster = 0;
 
-    seek(DISK, 512 * part_start_lba + (info.first_data_sector - info.root_dir_sectors) * 512);
+    syscall_seek(DISK, 512 * part_start_lba + (info.first_data_sector - info.root_dir_sectors) * 512);
     FileEntry entry;
     for (int s = 0; s < info.root_dir_sectors * 512 / sizeof(FileEntry); s++)
     {
-        read(DISK, (char *)&entry, sizeof(entry));
+        syscall_read(DISK, (char *)&entry, sizeof(entry));
 
         if (*(char *)&entry == '\0')
             break;
@@ -183,18 +182,18 @@ uint32 read_file(const char* filename, char *buffer, int bsize)
     while (now_ind != bytes_to_read && now_cluster != CLUSTER_END)
     {
         uint32 cluster_sector_start = ((now_cluster - 2) * info.pbr.sectors_per_cluster) + info.first_data_sector;
-        seek(DISK, 512 * part_start_lba + 512 * cluster_sector_start);
+        syscall_seek(DISK, 512 * part_start_lba + 512 * cluster_sector_start);
         for (int i = 0; bytes_to_read && i < info.pbr.sectors_per_cluster; i++)
         {
             for (int j = 0; j < 512 && now_ind != bytes_to_read; j++, now_ind++)
             {
-                buffer[now_ind] = getc(DISK);
+                buffer[now_ind] = syscall_getc(DISK);
             }
         }
 
         uint32 cluster_sector = now_cluster / 256 + info.first_fat_sector;
-        seek(DISK, (part_start_lba + cluster_sector) * 512 + now_cluster % 256 * 2);
-        read(DISK, (char *)&now_cluster, 2);
+        syscall_seek(DISK, (part_start_lba + cluster_sector) * 512 + now_cluster % 256 * 2);
+        syscall_read(DISK, (char *)&now_cluster, 2);
     }
 
     return file_size;

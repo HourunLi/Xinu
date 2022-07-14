@@ -9,4 +9,5 @@ file xinu.elf
 target remote :1234
 disp /5i $pc
 b meminit
+b main.c:11
 c

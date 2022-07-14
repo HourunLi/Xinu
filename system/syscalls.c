@@ -22,7 +22,9 @@ const void *syscalls[] = {
     &free,          // 16
     &realloc,       // 17
     &fgetc,         // 18
-    &fputc          // 19
+    &fputc,         // 19
+    &getc,          // 20
+    &seek           // 21
 };
 
 // Syscall wrapper for doing syscall in user space
@@ -70,11 +72,4 @@ uint32 do_syscall(uint32 id, uint32 args_count, ...) {
 
     asm("int $48");
 	return return_value;
-}
-
-int sys_uprintf(int a) {
-    int s = a+1;
-    int s1 = s*2;
-    // printf("hello from sysprintf\n");
-    return s1;
 }

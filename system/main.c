@@ -1,20 +1,19 @@
 /*  main.c  - main */
 
 #include <xinu.h>
+char buffer[16400];
+
+int sys_uprintf(const char* fmt, ...) {
+    syscall_printf("Hello world from hello.elf\n");
+    return 0;
+}
 
 process	main(void)
 {
 	// /* Run the Xinu shell */
 	syscall_recvclr();
-	syscall_resume(syscall_create(shell, 8192, 50, "shell", 1, KBDVGA));
-
-	/* Wait for shell to exit and recreate it */
-
-	while (TRUE) {
-		syscall_receive();
-		syscall_sleepms(200);
-        syscall_printf("\n\nMain process recreating shell\n\n");
-		syscall_resume(syscall_create(shell, 4096, 20, "shell", 1, KBDVGA));
-	}
+    uint32 size = read_file("HELLO.ELF", buffer, 16384);
+    uint32 entrypoint = (uint32) buffer + get_elf_entrypoint(buffer);
+	syscall_resume(syscall_create(entrypoint, 8192, 50, "printf", 1, sys_uprintf));
 }
 

@@ -73,6 +73,8 @@ extern	char	*getbuf(bpid32);
 
 /* in file getc.c */
 extern	syscall	getc(did32);
+#define syscall_getc(...) \
+		do_generic_syscall(syscall, SYSCALL_GETC, __VA_ARGS__)
 
 /* in file getitem.c */
 extern	pid32	getfirst(qid16);
@@ -281,6 +283,7 @@ extern	syscall	open(did32, char *, char *);
 
 /* in file panic.c */
 extern	void	panic(char *);
+#define assert(x) do { if (!(x)) panic(#x); } while(0)
 
 /* in file platinit.c */
 extern	void	platinit(void);
@@ -367,6 +370,8 @@ extern	pri16	resume(pid32);
 
 /* in file seek.c */
 extern	syscall	seek(did32, uint32);
+#define syscall_seek(...) \
+		do_generic_syscall(pri16, SYSCALL_SEEK, __VA_ARGS__)
 
 /* in file semcount.c */
 extern	syscall	semcount(sid32);
